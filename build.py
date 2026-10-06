@@ -3,10 +3,16 @@
 Every asset is written as <name>-<content hash>.svg and README.md is regenerated to point at
 them, so GitHub's image cache can never serve a stale panel after an edit.
 """
+import base64
 import hashlib
+import io
 import math
 import random
+import re
 from pathlib import Path
+
+from fontTools import subset
+from fontTools.ttLib import TTFont
 
 ROOT = Path(__file__).parent
 OUT = ROOT / "assets"
@@ -18,10 +24,11 @@ BG, PANEL, LINE = "#0b0f14", "#10161e", "#1e2732"
 TXT, MUTED, DIM = "#dfe5ec", "#9aa6b4", "#5f6c7c"
 AMZ = "#ff9900"
 OK, WARN, CRIT, CHEM, BLUE = "#2dd4bf", "#fbbf24", "#f87171", "#a78bfa", "#60a5fa"
-MONO = "ui-monospace,SFMono-Regular,'JetBrains Mono',Menlo,Consolas,monospace"
+SANS, MONO = "Space Grotesk", "Geist Mono"  # both SIL OFL 1.1, embedded per panel (see fonts/)
+FONT_FILES = {SANS: "fonts/SpaceGrotesk.woff2", MONO: "fonts/GeistMono.woff2"}
 
 BASE_CSS = f"""
-text{{font-family:{MONO};fill:{TXT}}}
+text{{font-family:'{SANS}',sans-serif;fill:{TXT}}}.mo{{font-family:'{MONO}',monospace}}
 .m{{fill:{MUTED}}}.d{{fill:{DIM}}}.chem{{fill:{CHEM}}}
 .b{{font-weight:700}}
 .fade{{opacity:0;animation:fade .6s ease-out forwards}}
@@ -41,10 +48,25 @@ def esc(s):
     return str(s).replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
 
 
+def font_faces(body):
+    """GitHub serves README SVGs as images, which can't fetch web fonts, so each panel carries
+    its own subset (only the glyphs it uses) of both fonts as inline woff2."""
+    text = " ".join(re.findall(r">([^<]+)<", body)).replace("&amp;", "&").replace("&lt;", "<").replace("&gt;", ">")
+    out = []
+    for family, path in FONT_FILES.items():
+        f = TTFont(ROOT / path)
+        opts = subset.Options(); opts.flavor = "woff2"; opts.layout_features = ["*"]
+        sub = subset.Subsetter(opts); sub.populate(text=text + " "); sub.subset(f)
+        buf = io.BytesIO(); f.flavor = "woff2"; f.save(buf)
+        out.append(f"@font-face{{font-family:'{family}';font-weight:100 900;"
+                   f"src:url(data:font/woff2;base64,{base64.b64encode(buf.getvalue()).decode()}) format('woff2')}}")
+    return "".join(out)
+
+
 def svg(name, h, body, css="", w=W, box=True):
     frame = f'<rect x=".5" y=".5" width="{w-1}" height="{h-1}" rx="14" fill="{BG}" stroke="{LINE}"/>' if box else ""
     doc = (f'<svg xmlns="http://www.w3.org/2000/svg" width="{w}" height="{h}" viewBox="0 0 {w} {h}" '
-           f'role="img"><style>{BASE_CSS}{css}</style>{frame}{body}</svg>')
+           f'role="img"><style>{font_faces(body)}{BASE_CSS}{css}</style>{frame}{body}</svg>')
     fname = f"{name}-{hashlib.sha1(doc.encode()).hexdigest()[:8]}.svg"
     (OUT / fname).write_text(doc)
     BUILT[name] = fname
@@ -56,8 +78,8 @@ def d(s):  # animation-delay attribute
 
 def label(text, right=""):
     """Small muted label in the top corners of a panel (replaces the old window chrome)."""
-    r = f'<text x="{W-32}" y="38" font-size="12" class="d" text-anchor="end">{esc(right)}</text>' if right else ""
-    return f'<text x="32" y="38" font-size="12" class="d">{esc(text)}</text>{r}'
+    r = f'<text x="{W-32}" y="38" font-size="12" class="mo d" text-anchor="end">{esc(right)}</text>' if right else ""
+    return f'<text x="32" y="38" font-size="12" class="mo d">{esc(text)}</text>{r}'
 
 
 # ── header motifs: one element from each project, cycling ────────────
@@ -153,7 +175,7 @@ def header():
     b = [f'<defs>{defs}</defs>',
          f'<g clip-path="url(#clip)"><rect width="{W}" height="{H}" fill="url(#dots)" mask="url(#m)"/>'
          f'<circle cx="{LX}" cy="{LY}" r="150" fill="url(#glow)"/></g>',
-         f'<text x="42" y="56" font-size="13" class="d rise" {d(0)}><tspan style="fill:{OK}">~ $</tspan> whoami</text>',
+         f'<text x="42" y="56" font-size="13" class="mo d rise" {d(0)}><tspan style="fill:{OK}">~ $</tspan> whoami</text>',
          f'<text x="40" y="112" font-size="44" class="b rise" {d(.1)}>Devansh Mehta</text>',
          f'<text x="42" y="146" font-size="16" class="rise" {d(.3)}>Backend &amp; data systems.</text>',
          f'<text x="42" y="174" font-size="14" class="m rise" {d(.45)}>SDE intern @ <tspan style="fill:{AMZ}">Amazon</tspan>'
@@ -203,12 +225,12 @@ TILE_W, TILE_H = 104, 164  # same height as the easter egg so they share a row
 
 
 def button(name, title, accent):
-    """A tall contact tile: big icon on top, label below. Sits inline next to the easter egg."""
+    """A round contact button with its label underneath. Sits inline next to the easter egg."""
     w, h, cx = TILE_W, TILE_H, TILE_W / 2
-    body = (f'{glass(w, h, rx=14)}'
-            f'<g transform="translate({cx} 66) scale(1.9) translate({-cx} -66)">{icon(title, cx - 9, 57, accent)}</g>'
-            f'<text x="{cx}" y="124" font-size="13" text-anchor="middle" class="b">{esc(title)}</text>'
-            f'<text x="{cx}" y="146" font-size="12" text-anchor="middle" class="d">↗</text>')
+    body = (f'<circle cx="{cx}" cy="62" r="34" fill="#fff" fill-opacity=".04" stroke="#fff" stroke-opacity=".12"/>'
+            f'<g transform="translate({cx} 62) scale(1.6) translate({-cx} -62)">{icon(title, cx - 9, 53, accent)}</g>'
+            f'<text x="{cx}" y="126" font-size="13.5" text-anchor="middle" class="b">{esc(title)}</text>'
+            f'<text x="{cx}" y="146" font-size="11" text-anchor="middle" class="mo d">open ↗</text>')
     svg(name, h, body, w=w, box=False)
 
 
@@ -310,7 +332,7 @@ def flagship():
 
 
 # ── project cards ────────────────────────────────────────────────────
-CW, CH = 412, 118
+CW, CH = 412, 146
 PROJECTS = [  # key, title, status, one line, stack, link
     ("devansh-os", "devansh-OS", "OSS", "Tells me what I've been neglecting.", "FastAPI · SQLite",
      "https://github.com/dumbanshm/devansh-OS"),
@@ -349,17 +371,21 @@ ICONS = {"devansh-os": motif_heatmap, "confidently-wrong": motif_wrong, "codeweb
 
 
 def card(i, key, title, status, line, stack, link):
-    T, tx = 76, 118
-    b = [glass(CW, CH),
-         f'<g transform="translate({20+T/2} {CH/2}) scale(.5) translate({-(20+T/2)} {-CH/2})">{ICONS[key](20+T/2, CH/2)}</g>',
-         f'<g class="rise" {d(.05 + i*.06)}>',
-         f'<text x="{tx}" y="42" font-size="17" class="b">{esc(title)}</text>',
-         f'<text x="{tx}" y="70" font-size="13" class="m">{esc(line)}</text>',
-         f'<text x="{tx}" y="{CH-22}" font-size="11.5" class="d">{esc(stack)}</text></g>']
+    H = CH
     c = OK if status == "LIVE" else DIM
-    b.append(f'<circle cx="{CW-24-len(status)*7-10}" cy="37" r="3.5" fill="{c}"/>'
-             f'<text x="{CW-24}" y="41" font-size="11" text-anchor="end" style="fill:{c}">{status}</text>')
-    svg(f"card-{key}", CH, "".join(b), w=CW, box=False)
+    b = [f'<rect width="{CW}" height="{H}" rx="14" fill="{BG}"/>',
+         f'<clipPath id="c"><rect width="{CW}" height="{H}" rx="14"/></clipPath>',
+         f'<g clip-path="url(#c)"><g opacity=".11" transform="translate({CW-110} {H/2+4}) scale(2) '
+         f'translate({-(CW-110)} {-(H/2+4)})">{ICONS[key](CW-110, H/2+4)}</g></g>',
+         f'<rect x=".5" y=".5" width="{CW-1}" height="{H-1}" rx="14" fill="none" stroke="{LINE}"/>',
+         f'<g class="rise" {d(.05 + i*.06)}>',
+         f'<circle cx="{CW-26}" cy="28" r="4" fill="{c}"/>'
+         + (f'<circle cx="{CW-26}" cy="28" r="8" fill="{c}" fill-opacity=".18"/>' if status == "LIVE" else "")
+         + f'<text x="{CW-38}" y="32" font-size="11" text-anchor="end" class="mo" style="fill:{c}">{status.lower()}</text>',
+         f'<text x="23" y="62" font-size="32" class="b" letter-spacing="-.9">{esc(title)}</text>',
+         f'<text x="24" y="90" font-size="13.5" class="m">{esc(line)}</text>',
+         f'<text x="24" y="{H-20}" font-size="11.5" class="mo d">{esc(stack)}</text></g>']
+    svg(f"card-{key}", H, "".join(b), w=CW, box=False)
 
 
 EGG_W = 520
@@ -372,13 +398,13 @@ def easter_egg():
              ("8 stones per letter.", "m")]
     for i, (ln, cl) in enumerate(lines):
         if ln:
-            b.append(f'<text x="180" y="{46 + i*20}" font-size="15" class="{cl} fade" {d(2.2 + i*.12)}>{esc(ln)}</text>')
-    b.append(f'<text x="180" y="{H-16}" font-size="12" class="d fade" {d(3)}>encoded with hexago</text>')
+            b.append(f'<text x="180" y="{46 + i*20}" font-size="15" class="mo {cl} fade" {d(2.2 + i*.12)}>{esc(ln)}</text>')
+    b.append(f'<text x="180" y="{H-16}" font-size="12" class="mo d fade" {d(3)}>encoded with hexago</text>')
     svg("easter-egg", H, "".join(b), w=EGG_W, box=False)
 
 
 def section_title(name, text):
-    svg(name, 40, f'<text x="2" y="26" font-size="13" class="d">{esc(text)}</text>'
+    svg(name, 40, f'<text x="2" y="26" font-size="13" class="mo d">{esc(text)}</text>'
                   f'<line x1="{len(text)*8+14}" y1="21" x2="{W-2}" y2="21" stroke="{LINE}"/>', box=False)
 
 
