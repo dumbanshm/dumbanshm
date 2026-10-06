@@ -177,6 +177,9 @@ def header():
 RESUME_URL = "https://drive.google.com/file/d/1qVswRn4h9XEOOss8l3NJFACKPQXICMg2/view?usp=sharing"  # Google Drive link to the resume PDF
 
 
+LIGHT = {OK: "#5eead4", BLUE: "#93c5fd", WARN: "#fcd34d"}  # lighter, more vibrant tints for glass fills
+
+
 def icon(kind, x, y, col):
     """18px line icons, drawn by hand so nothing is fetched."""
     if kind == "email":
@@ -190,28 +193,22 @@ def icon(kind, x, y, col):
             f'<path d="M{x+11},{y} v5 h5 M{x+5},{y+10} h8 M{x+5},{y+14} h6" fill="none" stroke="{col}" stroke-width="1.5"/>')
 
 
-def frosted(w, h, tint, rx=14, blob=(.82, .1, .55), strength=.42):
-    """Matte frosted glass: a blurred colour blob behind a translucent frost layer, fine grain,
-    a hairline white border and a light rim along the top edge."""
-    bx, by, br = w * blob[0], h * blob[1], min(w, h) * blob[2] + 30
+def frosted(w, h, tint, rx=14, strength=.13):
+    """Flat matte glass: one even, light tint (like light coming through from behind), fine grain,
+    and a border in the same hue. No gradients."""
     return (f'<defs><clipPath id="gc"><rect width="{w}" height="{h}" rx="{rx}"/></clipPath>'
-            f'<filter id="gb" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="{br*.45:.0f}"/></filter>'
             f'<filter id="gn" x="0" y="0" width="100%" height="100%"><feTurbulence type="fractalNoise" baseFrequency=".85" '
-            f'numOctaves="2" stitchTiles="stitch"/><feColorMatrix values="0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 .07 0"/></filter>'
-            f'<linearGradient id="gf" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".07"/>'
-            f'<stop offset="1" stop-color="#fff" stop-opacity=".015"/></linearGradient></defs>'
+            f'numOctaves="2" stitchTiles="stitch"/><feColorMatrix values="0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 .05 0"/></filter></defs>'
             f'<g clip-path="url(#gc)"><rect width="{w}" height="{h}" fill="{BG}"/>'
-            f'<circle cx="{bx:.0f}" cy="{by:.0f}" r="{br:.0f}" fill="{tint}" fill-opacity="{strength}" filter="url(#gb)"/>'
-            f'<circle cx="{w*.08:.0f}" cy="{h*1.05:.0f}" r="{br*.7:.0f}" fill="{tint}" fill-opacity="{strength*.35:.2f}" filter="url(#gb)"/>'
-            f'<rect width="{w}" height="{h}" fill="url(#gf)"/><rect width="{w}" height="{h}" filter="url(#gn)"/></g>'
-            f'<rect x=".5" y=".5" width="{w-1}" height="{h-1}" rx="{rx}" fill="none" stroke="#fff" stroke-opacity=".09"/>'
-            f'<path d="M{rx},1 H{w-rx}" stroke="#fff" stroke-opacity=".22" stroke-linecap="round"/>')
+            f'<rect width="{w}" height="{h}" fill="{tint}" fill-opacity="{strength}"/>'
+            f'<rect width="{w}" height="{h}" filter="url(#gn)"/></g>'
+            f'<rect x=".5" y=".5" width="{w-1}" height="{h-1}" rx="{rx}" fill="none" stroke="{tint}" stroke-opacity=".32"/>')
 
 
 def button(name, title, accent):
     """One contact row for the footer's right column."""
     w, h = 300, 48
-    body = (f'{frosted(w, h, accent, rx=12, blob=(.12, .5, .9), strength=.32)}'
+    body = (f'{frosted(w, h, LIGHT.get(accent, accent), rx=12)}'
             f'{icon(title, 22, 15, accent)}'
             f'<text x="54" y="29" font-size="14" class="b">{esc(title)}</text>'
             f'<text x="{w-22}" y="29" font-size="14" text-anchor="end" class="m">↗</text>')
@@ -347,8 +344,8 @@ def go_board(x, y, msg="hire me", n=9, cell=8.5):
     return "".join(g)
 
 
-TINT = {"devansh-os": OK, "confidently-wrong": CRIT, "codeweb": CHEM, "codeclimb": WARN,
-        "insilicomate": BLUE, "hexago": "#c69c5d"}
+TINT = {"devansh-os": "#5eead4", "confidently-wrong": "#fb7185", "codeweb": "#c4b5fd", "codeclimb": "#fcd34d",
+        "insilicomate": "#93c5fd", "hexago": "#f2c879"}
 
 
 def card(i, key, title, status, line, stack, link):
