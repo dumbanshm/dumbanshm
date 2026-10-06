@@ -4,3 +4,7 @@ preview*.html
 preview.py
 shot-*.png
 review/
+explore.py
+explore.html
+preview-tints.html
+mkpreview.py

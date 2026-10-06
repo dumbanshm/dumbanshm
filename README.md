@@ -12,12 +12,12 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/dumbanshm/devansh-OS"><img src="./assets/card-devansh-os-fe8e4e0e.svg" width="49%" alt="devansh-OS: Tells me what I've been neglecting." /></a>
-  <a href="https://confidently-wrong-silk.vercel.app"><img src="./assets/card-confidently-wrong-8be88e3b.svg" width="49%" alt="confidently-wrong: Make an AI confidently wrong." /></a>
-  <a href="https://codeweb-8z86.onrender.com"><img src="./assets/card-codeweb-bd3d5a25.svg" width="49%" alt="codeweb: Any repo → a dependency graph." /></a>
-  <a href="https://code-climb-nu.vercel.app"><img src="./assets/card-codeclimb-07a046e8.svg" width="49%" alt="codeClimb: Daily Codeforces drills." /></a>
-  <a href="https://github.com/dumbanshm/InSilicomate"><img src="./assets/card-insilicomate-5aa174ab.svg" width="49%" alt="InSilicomate: Where could a drug bind?" /></a>
-  <a href="https://github.com/dumbanshm/hexago"><img src="./assets/card-hexago-9c7223b9.svg" width="49%" alt="hexago: Hides messages in Go games." /></a>
+  <a href="https://github.com/dumbanshm/devansh-OS"><img src="./assets/card-devansh-os-34593901.svg" width="49%" alt="devansh-OS: Tells me what I've been neglecting." /></a>
+  <a href="https://confidently-wrong-silk.vercel.app"><img src="./assets/card-confidently-wrong-56eec40d.svg" width="49%" alt="confidently-wrong: Make an AI confidently wrong." /></a>
+  <a href="https://codeweb-8z86.onrender.com"><img src="./assets/card-codeweb-41792971.svg" width="49%" alt="codeweb: Any repo → a dependency graph." /></a>
+  <a href="https://code-climb-nu.vercel.app"><img src="./assets/card-codeclimb-a23e3957.svg" width="49%" alt="codeClimb: Daily Codeforces drills." /></a>
+  <a href="https://github.com/dumbanshm/InSilicomate"><img src="./assets/card-insilicomate-e9b4304b.svg" width="49%" alt="InSilicomate: Where could a drug bind?" /></a>
+  <a href="https://github.com/dumbanshm/hexago"><img src="./assets/card-hexago-a9672d39.svg" width="49%" alt="hexago: Hides messages in Go games." /></a>
 </p>
 
 <p align="center">
@@ -25,8 +25,8 @@
 </p>
 
 <p>
-  <img align="left" src="./assets/easter-egg-4c927bc3.svg" width="61%" alt="A Go board whose stones encode a message: black = 1, white = 0, 8 stones per letter, read row by row." />
-  <a href="mailto:work.devanshmehta@gmail.com"><img src="./assets/btn-email-9b3a3ab3.svg" width="37%" alt="Email" /></a><br>
-  <a href="https://www.linkedin.com/in/devanshme"><img src="./assets/btn-linkedin-b07b2dbc.svg" width="37%" alt="LinkedIn" /></a><br>
-  <a href="https://drive.google.com/file/d/1qVswRn4h9XEOOss8l3NJFACKPQXICMg2/view?usp=sharing"><img src="./assets/btn-resume-8e6e81b6.svg" width="37%" alt="Resume" /></a>
+  <img align="left" src="./assets/easter-egg-6c035dcb.svg" width="61%" alt="A Go board whose stones encode a message: black = 1, white = 0, 8 stones per letter, read row by row." />
+  <a href="mailto:work.devanshmehta@gmail.com"><img src="./assets/btn-email-49ea44b5.svg" width="37%" alt="Email" /></a><br>
+  <a href="https://www.linkedin.com/in/devanshme"><img src="./assets/btn-linkedin-13bf89ea.svg" width="37%" alt="LinkedIn" /></a><br>
+  <a href="https://drive.google.com/file/d/1qVswRn4h9XEOOss8l3NJFACKPQXICMg2/view?usp=sharing"><img src="./assets/btn-resume-5661ed83.svg" width="37%" alt="Resume" /></a>
 </p>

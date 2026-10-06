@@ -177,7 +177,6 @@ def header():
 RESUME_URL = "https://drive.google.com/file/d/1qVswRn4h9XEOOss8l3NJFACKPQXICMg2/view?usp=sharing"  # Google Drive link to the resume PDF
 
 
-LIGHT = {OK: "#5eead4", BLUE: "#93c5fd", WARN: "#fcd34d"}  # lighter, more vibrant tints for glass fills
 
 
 def icon(kind, x, y, col):
@@ -193,22 +192,17 @@ def icon(kind, x, y, col):
             f'<path d="M{x+11},{y} v5 h5 M{x+5},{y+10} h8 M{x+5},{y+14} h6" fill="none" stroke="{col}" stroke-width="1.5"/>')
 
 
-def frosted(w, h, tint, rx=14, strength=.13):
-    """Flat matte glass: one even, light tint (like light coming through from behind), fine grain,
-    and a border in the same hue. No gradients."""
-    return (f'<defs><clipPath id="gc"><rect width="{w}" height="{h}" rx="{rx}"/></clipPath>'
-            f'<filter id="gn" x="0" y="0" width="100%" height="100%"><feTurbulence type="fractalNoise" baseFrequency=".85" '
-            f'numOctaves="2" stitchTiles="stitch"/><feColorMatrix values="0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 .05 0"/></filter></defs>'
-            f'<g clip-path="url(#gc)"><rect width="{w}" height="{h}" fill="{BG}"/>'
-            f'<rect width="{w}" height="{h}" fill="{tint}" fill-opacity="{strength}"/>'
-            f'<rect width="{w}" height="{h}" filter="url(#gn)"/></g>'
-            f'<rect x=".5" y=".5" width="{w-1}" height="{h-1}" rx="{rx}" fill="none" stroke="{tint}" stroke-opacity=".32"/>')
+def glass(w, h, rx=14):
+    """Neutral glass: an even whisper of white over the page colour and a soft white hairline."""
+    return (f'<rect width="{w}" height="{h}" rx="{rx}" fill="{BG}"/>'
+            f'<rect x=".5" y=".5" width="{w-1}" height="{h-1}" rx="{rx}" fill="#ffffff" fill-opacity=".04" '
+            f'stroke="#ffffff" stroke-opacity=".11"/>')
 
 
 def button(name, title, accent):
     """One contact row for the footer's right column."""
     w, h = 300, 48
-    body = (f'{frosted(w, h, LIGHT.get(accent, accent), rx=12)}'
+    body = (f'{glass(w, h, rx=12)}'
             f'{icon(title, 22, 15, accent)}'
             f'<text x="54" y="29" font-size="14" class="b">{esc(title)}</text>'
             f'<text x="{w-22}" y="29" font-size="14" text-anchor="end" class="m">↗</text>')
@@ -344,17 +338,21 @@ def go_board(x, y, msg="hire me", n=9, cell=8.5):
     return "".join(g)
 
 
-TINT = {"devansh-os": "#5eead4", "confidently-wrong": "#fb7185", "codeweb": "#c4b5fd", "codeclimb": "#fcd34d",
-        "insilicomate": "#93c5fd", "hexago": "#f2c879"}
+TINT = {"devansh-os": OK, "confidently-wrong": CRIT, "codeweb": CHEM, "codeclimb": WARN,
+        "insilicomate": BLUE, "hexago": "#c69c5d"}
+ICONS = {"devansh-os": motif_heatmap, "confidently-wrong": motif_wrong, "codeweb": motif_graph,
+         "codeclimb": motif_climb, "insilicomate": motif_molecule, "hexago": motif_go}
+
 
 
 def card(i, key, title, status, line, stack, link):
-    t = TINT[key]
-    b = [frosted(CW, CH, t),
+    T, tx = 76, 118
+    b = [glass(CW, CH),
+         f'<g transform="translate({20+T/2} {CH/2}) scale(.5) translate({-(20+T/2)} {-CH/2})">{ICONS[key](20+T/2, CH/2)}</g>',
          f'<g class="rise" {d(.05 + i*.06)}>',
-         f'<text x="24" y="42" font-size="17" class="b">{esc(title)}</text>',
-         f'<text x="24" y="70" font-size="13" class="m">{esc(line)}</text>',
-         f'<text x="24" y="{CH-22}" font-size="11.5" class="d">{esc(stack)}</text></g>']
+         f'<text x="{tx}" y="42" font-size="17" class="b">{esc(title)}</text>',
+         f'<text x="{tx}" y="70" font-size="13" class="m">{esc(line)}</text>',
+         f'<text x="{tx}" y="{CH-22}" font-size="11.5" class="d">{esc(stack)}</text></g>']
     c = OK if status == "LIVE" else DIM
     b.append(f'<circle cx="{CW-24-len(status)*7-10}" cy="37" r="3.5" fill="{c}"/>'
              f'<text x="{CW-24}" y="41" font-size="11" text-anchor="end" style="fill:{c}">{status}</text>')
@@ -366,14 +364,14 @@ EGG_W = 520
 
 def easter_egg():
     H = 164
-    b = [go_board(30, 32, cell=12.5)]
+    b = [glass(EGG_W, H), go_board(30, 32, cell=12.5)]
     lines = [("this board isn't a game.", ""), ("", ""), ("read it row by row:", "m"), ("black = 1, white = 0,", "m"),
              ("8 stones per letter.", "m")]
     for i, (ln, cl) in enumerate(lines):
         if ln:
             b.append(f'<text x="180" y="{46 + i*20}" font-size="15" class="{cl} fade" {d(2.2 + i*.12)}>{esc(ln)}</text>')
     b.append(f'<text x="180" y="{H-16}" font-size="12" class="d fade" {d(3)}>encoded with hexago</text>')
-    svg("easter-egg", H, "".join(b), w=EGG_W)
+    svg("easter-egg", H, "".join(b), w=EGG_W, box=False)
 
 
 def section_title(name, text):

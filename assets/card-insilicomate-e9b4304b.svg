@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="412" height="118" viewBox="0 0 412 118" role="img"><style>
+text{font-family:ui-monospace,SFMono-Regular,'JetBrains Mono',Menlo,Consolas,monospace;fill:#dfe5ec}
+.m{fill:#9aa6b4}.d{fill:#5f6c7c}.chem{fill:#a78bfa}
+.b{font-weight:700}
+.fade{opacity:0;animation:fade .6s ease-out forwards}
+.rise{opacity:0;animation:rise .6s cubic-bezier(.2,.8,.2,1) forwards}
+.draw{animation:draw 1s ease-out forwards}
+.pop{opacity:0;transform-box:fill-box;transform-origin:center;animation:pop .45s cubic-bezier(.3,1.6,.5,1) forwards}
+@keyframes fade{to{opacity:1}}
+@keyframes rise{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+@keyframes draw{to{stroke-dashoffset:0}}
+@keyframes pop{from{opacity:0;transform:scale(.2)}to{opacity:1;transform:scale(1)}}
+</style><rect width="412" height="118" rx="14" fill="#0b0f14"/><rect x=".5" y=".5" width="411" height="117" rx="14" fill="#ffffff" fill-opacity=".04" stroke="#ffffff" stroke-opacity=".11"/><g transform="translate(58.0 59.0) scale(.5) translate(-58.0 -59.0)"><path d="M58.0,33.0 L35.5,46.0 L35.5,72.0 L58.0,85.0 L80.5,72.0 L80.5,46.0 Z" fill="none" stroke="#9aa6b4" stroke-width="2.4" stroke-linejoin="round"/><line x1="58.0" y1="33.0" x2="58.0" y2="11.0" stroke="#9aa6b4" stroke-width="2.4"/><circle cx="58.0" cy="11.0" r="6" fill="#f87171"/><line x1="58.0" y1="85.0" x2="58.0" y2="107.0" stroke="#9aa6b4" stroke-width="2.4"/><circle cx="58.0" cy="107.0" r="6" fill="#60a5fa"/><line x1="35.5" y1="72.0" x2="16.5" y2="83.0" stroke="#9aa6b4" stroke-width="2.4"/><circle cx="16.5" cy="83.0" r="6" fill="#9aa6b4"/><line x1="80.5" y1="46.0" x2="99.5" y2="35.0" stroke="#9aa6b4" stroke-width="2.4"/><circle cx="99.5" cy="35.0" r="6" fill="#9aa6b4"/></g><g class="rise" style="animation-delay:0.29s"><text x="118" y="42" font-size="17" class="b">InSilicomate</text><text x="118" y="70" font-size="13" class="m">Where could a drug bind?</text><text x="118" y="96" font-size="11.5" class="d">Python · 3Dmol.js</text></g><circle cx="357" cy="37" r="3.5" fill="#5f6c7c"/><text x="388" y="41" font-size="11" text-anchor="end" style="fill:#5f6c7c">OSS</text></svg>

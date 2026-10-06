@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="300" height="48" viewBox="0 0 300 48" role="img"><style>
+text{font-family:ui-monospace,SFMono-Regular,'JetBrains Mono',Menlo,Consolas,monospace;fill:#dfe5ec}
+.m{fill:#9aa6b4}.d{fill:#5f6c7c}.chem{fill:#a78bfa}
+.b{font-weight:700}
+.fade{opacity:0;animation:fade .6s ease-out forwards}
+.rise{opacity:0;animation:rise .6s cubic-bezier(.2,.8,.2,1) forwards}
+.draw{animation:draw 1s ease-out forwards}
+.pop{opacity:0;transform-box:fill-box;transform-origin:center;animation:pop .45s cubic-bezier(.3,1.6,.5,1) forwards}
+@keyframes fade{to{opacity:1}}
+@keyframes rise{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+@keyframes draw{to{stroke-dashoffset:0}}
+@keyframes pop{from{opacity:0;transform:scale(.2)}to{opacity:1;transform:scale(1)}}
+</style><rect width="300" height="48" rx="12" fill="#0b0f14"/><rect x=".5" y=".5" width="299" height="47" rx="12" fill="#ffffff" fill-opacity=".04" stroke="#ffffff" stroke-opacity=".11"/><path d="M24,15 h9 l5,5 v13 h-14 z" fill="none" stroke="#fbbf24" stroke-width="1.7" stroke-linejoin="round"/><path d="M33,15 v5 h5 M27,25 h8 M27,29 h6" fill="none" stroke="#fbbf24" stroke-width="1.5"/><text x="54" y="29" font-size="14" class="b">resume</text><text x="278" y="29" font-size="14" text-anchor="end" class="m">↗</text></svg>
