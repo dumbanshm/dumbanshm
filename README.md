@@ -25,7 +25,7 @@
 </p>
 
 <p align="center">
-  <a href="https://hexago-five.vercel.app/#lets-chat"><img src="./assets/easter-egg-8fa54e4e.svg" width="60%" alt="A Go board whose stones encode a message: black = 1, white = 0, 8 stones per letter, read row by row. Opens hexago, which decodes a real game." /></a>
+  <a href="https://hexago-five.vercel.app/#lets-chat"><img src="./assets/easter-egg-dbc807af.svg" width="60%" alt="A Go board whose stones encode a message: black = 1, white = 0, 8 stones per letter, read row by row. Opens hexago, which decodes a real game." /></a>
   <a href="mailto:work.devanshmehta@gmail.com"><img src="./assets/btn-email-45cf04d2.svg" width="12.4%" alt="Email" /></a>
   <a href="https://www.linkedin.com/in/devanshme"><img src="./assets/btn-linkedin-a14312a8.svg" width="12.4%" alt="LinkedIn" /></a>
   <a href="https://drive.google.com/file/d/1qVswRn4h9XEOOss8l3NJFACKPQXICMg2/view?usp=sharing"><img src="./assets/btn-resume-1bab7cc2.svg" width="12.4%" alt="Resume" /></a>

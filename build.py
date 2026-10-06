@@ -355,9 +355,10 @@ PROJECTS = [  # key, title, status, one line, stack, link
 ]
 
 
-def go_board(x, y, msg="hire me", n=9, cell=8.5):
+def go_board(x, y, msg="Let's chat!", n=11, cell=11):
     """hexago's scheme: black = 1, white = 0, 8 stones per character, row by row."""
     bits = "".join(f"{ord(c):08b}" for c in msg)
+    assert len(bits) <= n * n, "message doesn't fit on the board"
     g = [f'<rect x="{x-7}" y="{y-7}" width="{(n-1)*cell+14}" height="{(n-1)*cell+14}" fill="{GO_PAPER}" '
          f'stroke="{GO_INK}" stroke-width="1.5"/>']
     for k in range(n):
@@ -366,7 +367,7 @@ def go_board(x, y, msg="hire me", n=9, cell=8.5):
     for i, bit in enumerate(bits):
         r, c = divmod(i, n)
         g.append(f'<circle cx="{x+c*cell}" cy="{y+r*cell}" r="{cell*.43:.1f}" {go_stone(bit == "1", 1)} '
-                 f'class="pop" {d(.4 + i*.03)}/>')
+                 f'class="pop" {d(.4 + i*.02)}/>')
     return "".join(g)
 
 
@@ -401,7 +402,7 @@ EGG_W = 520
 
 def easter_egg():
     H = 164
-    b = [glass(EGG_W, H), go_board(30, 32, cell=12.5)]
+    b = [glass(EGG_W, H), go_board(30, 27)]
     lines = [("this board isn't a game.", ""), ("", ""), ("read it row by row:", "m"), ("black = 1, white = 0,", "m"),
              ("8 stones per letter.", "m")]
     for i, (ln, cl) in enumerate(lines):
