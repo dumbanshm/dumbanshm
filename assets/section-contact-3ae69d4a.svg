@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="412" height="118" viewBox="0 0 412 118" role="img"><style>
+<svg xmlns="http://www.w3.org/2000/svg" width="840" height="40" viewBox="0 0 840 40" role="img"><style>
 text{font-family:ui-monospace,SFMono-Regular,'JetBrains Mono',Menlo,Consolas,monospace;fill:#dfe5ec}
 .m{fill:#9aa6b4}.d{fill:#5f6c7c}.chem{fill:#a78bfa}
 .b{font-weight:700}
@@ -10,4 +10,4 @@ text{font-family:ui-monospace,SFMono-Regular,'JetBrains Mono',Menlo,Consolas,mon
 @keyframes rise{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
 @keyframes draw{to{stroke-dashoffset:0}}
 @keyframes pop{from{opacity:0;transform:scale(.2)}to{opacity:1;transform:scale(1)}}
-</style><rect x=".5" y=".5" width="411" height="117" rx="14" fill="#0b0f14" stroke="#1e2732"/><g class="rise" style="animation-delay:0.23s"><text x="24" y="42" font-size="17" class="b">codeClimb</text><text x="24" y="70" font-size="13" class="m">Daily Codeforces drills.</text><text x="24" y="96" font-size="11.5" class="d">React Native · Firebase</text></g><circle cx="350" cy="37" r="3.5" fill="#2dd4bf"/><text x="388" y="41" font-size="11" text-anchor="end" style="fill:#2dd4bf">LIVE</text></svg>
+</style><text x="2" y="26" font-size="13" class="d">say hi</text><line x1="62" y1="21" x2="838" y2="21" stroke="#1e2732"/></svg>

@@ -71,20 +71,38 @@ def motif_molecule(cx, cy):  # ChemVecto / InSilicomate
     return "".join(g)
 
 
-def motif_graph(cx, cy):  # codeweb
-    nodes = [(0, 0), (-46, -26), (40, -34), (-50, 24), (44, 22), (6, 44), (-8, -50)]
-    edges = [(0, 1), (0, 2), (0, 3), (0, 4), (4, 5), (3, 5), (1, 6), (2, 6), (2, 4)]
-    g = [f'<line x1="{cx+nodes[a][0]}" y1="{cy+nodes[a][1]}" x2="{cx+nodes[b][0]}" y2="{cy+nodes[b][1]}" stroke="{DIM}" stroke-width="1.8"/>' for a, b in edges]
-    for i, (x, y) in enumerate(nodes):
-        g.append(f'<circle cx="{cx+x}" cy="{cy+y}" r="{9 if i == 0 else 6}" fill="{OK if i == 0 else BLUE}"/>')
+def motif_graph(cx, cy):  # codeweb: a real codebase graph is a hairball, not a tree
+    random.seed(23)
+    nodes = []
+    while len(nodes) < 34:
+        x, y = random.gauss(0, 30), random.gauss(0, 26)
+        if (x / 64) ** 2 + (y / 56) ** 2 < 1:
+            kind = random.choices(("file", "fn", "mod"), (4, 7, 2))[0]
+            nodes.append((cx + x, cy + y, kind))
+    edges = set()
+    for i, (x, y, _) in enumerate(nodes):  # each node calls a couple of near-ish neighbours…
+        near = sorted(range(len(nodes)), key=lambda j: math.dist((x, y), nodes[j][:2]))[1:6]
+        for j in random.sample(near, random.choice((1, 2, 2, 3))):
+            edges.add(tuple(sorted((i, j))))
+    for _ in range(7):  # …and a few long-range imports cut across everything
+        edges.add(tuple(sorted(random.sample(range(len(nodes)), 2))))
+    g = [f'<line x1="{nodes[a][0]:.1f}" y1="{nodes[a][1]:.1f}" x2="{nodes[b][0]:.1f}" y2="{nodes[b][1]:.1f}" '
+         f'stroke="{DIM}" stroke-opacity=".8" stroke-width="1"/>' for a, b in edges]
+    style = {"file": (BLUE, 4.6), "fn": (CHEM, 2.8), "mod": (OK, 5.6)}
+    for x, y, kind in nodes:
+        col, r = style[kind]
+        g.append(f'<circle cx="{x:.1f}" cy="{y:.1f}" r="{r * random.uniform(.8, 1.25):.1f}" fill="{col}"/>')
     return "".join(g)
 
 
-def motif_heatmap(cx, cy):  # devansh-OS
+def motif_heatmap(cx, cy):  # devansh-OS: one row per tracked metric, each its own hue
     random.seed(4)
-    shades = ["#161b22", "#0e4429", "#006d32", "#26a641", "#39d353"]
-    return "".join(f'<rect x="{cx-62+c*18}" y="{cy-44+r*18}" width="14" height="14" rx="3" fill="{random.choice(shades)}"/>'
-                   for r in range(5) for c in range(7))
+    g = []
+    for r, col in enumerate((OK, BLUE, WARN, CHEM, CRIT)):
+        for c in range(7):
+            op = random.choice((.12, .12, .35, .6, .9))
+            g.append(f'<rect x="{cx-62+c*18}" y="{cy-44+r*18}" width="14" height="14" rx="3" fill="{col}" fill-opacity="{op}"/>')
+    return "".join(g)
 
 
 def motif_go(cx, cy):  # hexago
@@ -97,51 +115,103 @@ def motif_go(cx, cy):  # hexago
     return "".join(g)
 
 
-def motif_calibration(cx, cy):  # confidently-wrong
-    x0, y0, s = cx - 50, cy + 50, 100
-    g = [f'<path d="M{x0},{y0-s} V{y0} H{x0+s}" fill="none" stroke="{DIM}" stroke-width="1.8"/>',
-         f'<line x1="{x0}" y1="{y0}" x2="{x0+s}" y2="{y0-s}" stroke="{DIM}" stroke-dasharray="4 4"/>']
-    for i, h in enumerate((.18, .3, .36, .42, .5)):  # overconfident: bars sit under the diagonal
-        g.append(f'<rect x="{x0+4+i*19}" y="{y0-h*s}" width="14" height="{h*s}" rx="2" fill="{CRIT}" fill-opacity=".75"/>')
+def motif_wrong(cx, cy):  # confidently-wrong: a very sure, very wrong answer
+    return (f'<rect x="{cx-60}" y="{cy-46}" width="120" height="48" rx="12" fill="{PANEL}" stroke="{LINE}" stroke-width="1.5"/>'
+            f'<path d="M{cx-30},{cy+2} l-8,14 l20,-14 z" fill="{PANEL}" stroke="{LINE}" stroke-width="1.5" stroke-linejoin="round"/>'
+            f'<rect x="{cx-31}" y="{cy}" width="22" height="3" fill="{PANEL}"/>'
+            f'<text x="{cx}" y="{cy-15}" font-size="19" text-anchor="middle" class="b">2 + 2 = 5</text>'
+            f'<rect x="{cx-60}" y="{cy+30}" width="120" height="8" rx="4" fill="{LINE}"/>'
+            f'<rect x="{cx-60}" y="{cy+30}" width="118" height="8" rx="4" fill="{CRIT}"/>'
+            f'<text x="{cx+60}" y="{cy+56}" font-size="11" text-anchor="end" class="crit" style="fill:{CRIT}">99% sure</text>')
+
+
+def motif_climb(cx, cy):  # codeClimb: a staircase in Codeforces rank colours, flag on top
+    ranks = ["#9e9e9e", "#43a047", "#26a69a", "#3b82f6", "#a855f7", "#f59e0b", "#ef4444"]
+    g, base = [], cy + 48
+    for i, col in enumerate(ranks):
+        h = 12 + i * 12
+        g.append(f'<rect x="{cx-63+i*18}" y="{base-h}" width="16" height="{h}" rx="2.5" fill="{col}"/>')
+    tx, ty = cx - 63 + 6 * 18 + 8, base - 84
+    g.append(f'<line x1="{tx}" y1="{ty}" x2="{tx}" y2="{ty-26}" stroke="{TXT}" stroke-width="2"/>'
+             f'<path d="M{tx},{ty-26} l16,6 l-16,6 z" fill="{TXT}"/>')
     return "".join(g)
 
 
-def motif_climb(cx, cy):  # codeClimb
-    pts = [(-55, 40), (-35, 28), (-18, 34), (0, 10), (18, 16), (36, -14), (55, -40)]
-    path = "M" + " L".join(f"{cx+x},{cy+y}" for x, y in pts)
-    return (f'<path d="{path}" fill="none" stroke="{WARN}" stroke-width="2.6" stroke-linejoin="round"/>'
-            + "".join(f'<circle cx="{cx+x}" cy="{cy+y}" r="4" fill="{WARN}"/>' for x, y in pts))
-
-
-MOTIFS = [("chemvecto", motif_molecule), ("codeweb", motif_graph), ("devansh-os", motif_heatmap),
-          ("hexago", motif_go), ("confidently-wrong", motif_calibration), ("codeclimb", motif_climb)]
+MOTIFS = [motif_molecule, motif_graph, motif_heatmap, motif_go, motif_wrong, motif_climb]
 
 
 def header():
-    H = 220
-    b = [f'<text x="40" y="92" font-size="44" class="b rise" {d(.1)}>Devansh Mehta</text>',
-         f'<text x="42" y="128" font-size="16" class="rise" {d(.3)}>Backend &amp; data systems.</text>',
-         f'<text x="42" y="156" font-size="14" class="m rise" {d(.45)}>SDE intern @ <tspan style="fill:{AMZ}">Amazon</tspan>'
-         f' · ex-founding engineer @ <tspan class="chem">ChemVecto</tspan></text>',
-         f'<text x="42" y="182" font-size="13" class="d rise" {d(.6)}>BITS Pilani · CS + Biological Sciences · \'27</text>']
+    H, LX, LY = 236, 690, 118
+    defs = (f'<pattern id="dots" width="16" height="16" patternUnits="userSpaceOnUse">'
+            f'<circle cx="2" cy="2" r=".9" fill="#ffffff" fill-opacity=".07"/></pattern>'
+            f'<radialGradient id="glow"><stop offset="0" stop-color="{CHEM}" stop-opacity=".16"/>'
+            f'<stop offset="1" stop-color="{CHEM}" stop-opacity="0"/></radialGradient>'
+            f'<linearGradient id="fadeR" x1="0" x2="1"><stop offset=".25" stop-color="#fff" stop-opacity="0"/>'
+            f'<stop offset="1" stop-color="#fff" stop-opacity="1"/></linearGradient>'
+            f'<mask id="m"><rect width="{W}" height="{H}" fill="url(#fadeR)"/></mask>'
+            f'<clipPath id="clip"><rect width="{W}" height="{H}" rx="14"/></clipPath>')
+    b = [f'<defs>{defs}</defs>',
+         f'<g clip-path="url(#clip)"><rect width="{W}" height="{H}" fill="url(#dots)" mask="url(#m)"/>'
+         f'<circle cx="{LX}" cy="{LY}" r="150" fill="url(#glow)"/></g>',
+         f'<text x="42" y="56" font-size="13" class="d rise" {d(0)}><tspan style="fill:{OK}">~ $</tspan> whoami</text>',
+         f'<text x="40" y="112" font-size="44" class="b rise" {d(.1)}>Devansh Mehta</text>',
+         f'<text x="42" y="146" font-size="16" class="rise" {d(.3)}>Backend &amp; data systems.</text>',
+         f'<text x="42" y="174" font-size="14" class="m rise" {d(.45)}>SDE intern @ <tspan style="fill:{AMZ}">Amazon</tspan>'
+         f' · founding engineer @ <tspan class="chem">ChemVecto</tspan></text>',
+         f'<text x="42" y="200" font-size="13" class="d rise" {d(.6)}>BITS Pilani · CS + Biological Sciences · \'27</text>',
+         f'<circle cx="{LX}" cy="{LY}" r="82" fill="{BG}" fill-opacity=".6" stroke="{LINE}" stroke-width="1.5"/>',
+         f'<circle cx="{LX}" cy="{LY}" r="96" fill="none" stroke="{LINE}" stroke-dasharray="2 6"/>']
     n, step = len(MOTIFS), 2.6
     cycle = n * step
     on, hold = 100 * .5 / cycle, 100 * step / cycle
     css = (f".mo{{opacity:0;animation:cyc {cycle}s ease-in-out infinite both}}"
            f"@keyframes cyc{{0%{{opacity:0;transform:translateY(6px)}}{on:.1f}%{{opacity:1;transform:none}}"
            f"{hold:.1f}%{{opacity:1;transform:none}}{hold+on:.1f}%{{opacity:0;transform:translateY(-6px)}}100%{{opacity:0}}}}")
-    for i, (name, fn) in enumerate(MOTIFS):
-        b.append(f'<g class="mo" style="animation-delay:{i*step:.1f}s">{fn(700, 100)}'
-                 f'<text x="700" y="190" font-size="11" text-anchor="middle" class="d">{name}</text></g>')
+    for i, fn in enumerate(MOTIFS):
+        b.append(f'<g class="mo" style="animation-delay:{i*step:.1f}s">'
+                 f'<g transform="translate({LX} {LY}) scale(.82) translate({-LX} {-LY})">{fn(LX, LY)}</g></g>')
     svg("header", H, "".join(b), css)
 
 
 # ── contact buttons ──────────────────────────────────────────────────
-def button(name, text):
-    w, h = 132, 38
-    body = (f'<rect x=".5" y=".5" width="{w-1}" height="{h-1}" rx="19" fill="{BG}" stroke="{LINE}"/>'
-            f'<text x="{w/2}" y="24" font-size="13" text-anchor="middle">{esc(text)}</text>')
+RESUME_URL = "https://drive.google.com/file/d/1qVswRn4h9XEOOss8l3NJFACKPQXICMg2/view?usp=sharing"  # Google Drive link to the resume PDF
+
+
+def icon(kind, x, y, col):
+    """18px line icons, drawn by hand so nothing is fetched."""
+    if kind == "email":
+        return (f'<rect x="{x}" y="{y+2}" width="18" height="14" rx="2.5" fill="none" stroke="{col}" stroke-width="1.7"/>'
+                f'<path d="M{x+1},{y+4} l8,6 l8,-6" fill="none" stroke="{col}" stroke-width="1.7" stroke-linejoin="round"/>')
+    if kind == "linkedin":
+        return (f'<rect x="{x}" y="{y}" width="18" height="18" rx="3.5" fill="{col}"/>'
+                f'<text x="{x+9}" y="{y+13.5}" font-size="11.5" text-anchor="middle" class="b" '
+                f'style="fill:{BG};font-family:Helvetica,Arial,sans-serif">in</text>')
+    return (f'<path d="M{x+2},{y} h9 l5,5 v13 h-14 z" fill="none" stroke="{col}" stroke-width="1.7" stroke-linejoin="round"/>'
+            f'<path d="M{x+11},{y} v5 h5 M{x+5},{y+10} h8 M{x+5},{y+14} h6" fill="none" stroke="{col}" stroke-width="1.5"/>')
+
+
+def button(name, title, accent):
+    """One contact row for the footer's right column."""
+    w, h = 300, 48
+    body = (f'<rect x=".5" y=".5" width="{w-1}" height="{h-1}" rx="12" fill="{BG}" stroke="{LINE}"/>'
+            f'<rect x=".5" y=".5" width="{w-1}" height="{h-1}" rx="12" fill="{accent}" fill-opacity=".07"/>'
+            f'{icon(title, 22, 15, accent)}'
+            f'<text x="54" y="29" font-size="14" class="b">{esc(title)}</text>'
+            f'<text x="{w-22}" y="29" font-size="14" text-anchor="end" class="m">↗</text>')
     svg(name, h, body, w=w, box=False)
+
+
+def pill(name, text):
+    w, h = 200, 40
+    body = (f'<rect x=".5" y=".5" width="{w-1}" height="{h-1}" rx="20" fill="{BG}" stroke="{LINE}"/>'
+            f'<text x="{w/2}" y="25" font-size="12.5" text-anchor="middle" class="m">{esc(text)} ↗</text>')
+    svg(name, h, body, w=w, box=False)
+
+
+MORE = [("sparkathon", "https://github.com/dumbanshm/sparkathon"),
+        ("contest-reminders", "https://github.com/dumbanshm/contest-reminders"),
+        ("placement-enforcer", "https://github.com/dumbanshm/placement-enforcer-android-app"),
+        ("gocrypt", "https://github.com/dumbanshm/gocrypt")]
 
 
 # ── flagship: what ChemVecto does (not how) ──────────────────────────
@@ -255,24 +325,43 @@ def go_board(x, y, msg="hire me", n=9, cell=8.5):
                  f'<line x1="{x+k*cell}" y1="{y}" x2="{x+k*cell}" y2="{y+(n-1)*cell}" stroke="#4a3518" stroke-width=".8"/>')
     for i, bit in enumerate(bits):
         r, c = divmod(i, n)
-        g.append(f'<circle cx="{x+c*cell}" cy="{y+r*cell}" r="3.7" fill="{"#111" if bit == "1" else "#f2f2f2"}" '
+        g.append(f'<circle cx="{x+c*cell}" cy="{y+r*cell}" r="{cell*.43:.1f}" fill="{"#111" if bit == "1" else "#f2f2f2"}" '
                  f'class="pop" {d(.4 + i*.03)}/>')
     return "".join(g)
 
 
+TINT = {"devansh-os": OK, "confidently-wrong": CRIT, "codeweb": CHEM, "codeclimb": WARN,
+        "insilicomate": BLUE, "hexago": "#c69c5d"}
+
+
 def card(i, key, title, status, line, stack, link):
-    b = [f'<g class="rise" {d(.05 + i*.06)}>',
+    t = TINT[key]
+    b = [f'<defs><linearGradient id="t" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="{t}" stop-opacity=".16"/>'
+         f'<stop offset=".7" stop-color="{t}" stop-opacity="0"/></linearGradient></defs>',
+         f'<rect x=".5" y=".5" width="{CW-1}" height="{CH-1}" rx="14" fill="url(#t)" stroke="{t}" stroke-opacity=".3"/>',
+         f'<g class="rise" {d(.05 + i*.06)}>',
          f'<text x="24" y="42" font-size="17" class="b">{esc(title)}</text>',
          f'<text x="24" y="70" font-size="13" class="m">{esc(line)}</text>',
          f'<text x="24" y="{CH-22}" font-size="11.5" class="d">{esc(stack)}</text></g>']
-    if key == "hexago":
-        b.append(go_board(CW - 92, 26))
-    else:
-        live = status == "LIVE"
-        c = OK if live else DIM
-        b.append(f'<circle cx="{CW-24-len(status)*7-10}" cy="37" r="3.5" fill="{c}"/>'
-                 f'<text x="{CW-24}" y="41" font-size="11" text-anchor="end" style="fill:{c}">{status}</text>')
+    c = OK if status == "LIVE" else DIM
+    b.append(f'<circle cx="{CW-24-len(status)*7-10}" cy="37" r="3.5" fill="{c}"/>'
+             f'<text x="{CW-24}" y="41" font-size="11" text-anchor="end" style="fill:{c}">{status}</text>')
     svg(f"card-{key}", CH, "".join(b), w=CW)
+
+
+EGG_W = 520
+
+
+def easter_egg():
+    H = 164
+    b = [go_board(30, 32, cell=12.5)]
+    lines = [("this board isn't a game.", ""), ("", ""), ("read it row by row:", "m"), ("black = 1, white = 0,", "m"),
+             ("8 stones per letter.", "m")]
+    for i, (ln, cl) in enumerate(lines):
+        if ln:
+            b.append(f'<text x="180" y="{46 + i*20}" font-size="15" class="{cl} fade" {d(2.2 + i*.12)}>{esc(ln)}</text>')
+    b.append(f'<text x="180" y="{H-16}" font-size="12" class="d fade" {d(3)}>encoded with hexago</text>')
+    svg("easter-egg", H, "".join(b), w=EGG_W)
 
 
 def section_title(name, text):
@@ -286,14 +375,14 @@ def readme():
     cards = "\n".join(
         f'  <a href="{link}"><img src="{a("card-" + key)}" width="49%" alt="{title}: {line}" /></a>'
         for key, title, status, line, stack, link in PROJECTS)
+    rows = [("btn-email", "mailto:work.devanshmehta@gmail.com", "Email"),
+            ("btn-linkedin", "https://www.linkedin.com/in/devanshme", "LinkedIn")]
+    if RESUME_URL:
+        rows.append(("btn-resume", RESUME_URL, "Resume"))
+    contacts = "<br>\n".join(f'  <a href="{href}"><img src="{a(k)}" width="37%" alt="{alt}" /></a>' for k, href, alt in rows)
     return f"""<!-- Generated by build.py. Edit that, then run `python3 build.py`. -->
 <p align="center">
-  <img src="{a("header")}" width="100%" alt="Devansh Mehta. Backend and data systems. SDE intern at Amazon, ex-founding engineer at ChemVecto. BITS Pilani, CS + Biological Sciences, 2027." />
-</p>
-
-<p align="center">
-  <a href="mailto:work.devanshmehta@gmail.com"><img src="{a("btn-email")}" height="38" alt="Email" /></a>
-  <a href="https://www.linkedin.com/in/devanshme"><img src="{a("btn-linkedin")}" height="38" alt="LinkedIn" /></a>
+  <img src="{a("header")}" width="100%" alt="Devansh Mehta. Backend and data systems. SDE intern at Amazon, founding engineer at ChemVecto. BITS Pilani, CS + Biological Sciences, 2027." />
 </p>
 
 <p align="center">
@@ -307,6 +396,15 @@ def readme():
 <p align="center">
 {cards}
 </p>
+
+<p align="center">
+  <img src="{a("section-contact")}" width="100%" alt="Contact" />
+</p>
+
+<p>
+  <img align="left" src="{a("easter-egg")}" width="61%" alt="A Go board whose stones encode a message: black = 1, white = 0, 8 stones per letter, read row by row." />
+{contacts}
+</p>
 """
 
 
@@ -314,11 +412,14 @@ if __name__ == "__main__":
     for old in OUT.glob("*.svg"):
         old.unlink()
     header()
-    button("btn-email", "✉  email")
-    button("btn-linkedin", "in  linkedin")
     flagship()
     section_title("section-projects", "projects")
     for i, p in enumerate(PROJECTS):
         card(i, *p)
+    section_title("section-contact", "say hi")
+    easter_egg()
+    button("btn-email", "email", OK)
+    button("btn-linkedin", "linkedin", BLUE)
+    button("btn-resume", "resume", WARN)
     (ROOT / "README.md").write_text(readme())
     print("built", len(BUILT), "assets")
