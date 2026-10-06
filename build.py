@@ -227,7 +227,7 @@ def flagship():
     for i, (a, sub) in enumerate(steps):
         b.append(f'<g class="rise" {d(t0(i)+.2)}><text x="{cxs[i]:.0f}" y="{cy+66}" font-size="13" text-anchor="middle" class="b">{esc(a)}</text>'
                  f'<text x="{cxs[i]:.0f}" y="{cy+85}" font-size="11.5" text-anchor="middle" class="m">{esc(sub)}</text></g>')
-    svg("flagship.svg", H, "".join(b))
+    svg("chemvecto.svg", H, "".join(b))
 
 
 # ── 3. project cards ─────────────────────────────────────────────────

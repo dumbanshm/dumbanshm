@@ -11,7 +11,7 @@
 </p>
 
 <p align="center">
-  <img src="./assets/flagship.svg" width="100%" alt="Flagship: ChemVecto, where I was founding engineer. It takes a chemist from one molecule to a shortlist of better ones: find look-alikes in chemical space, screen out toxicity and drug-likeness risks, rank the best trade-offs across goals, then run a quantum check on the shortlist." />
+  <img src="./assets/chemvecto.svg" width="100%" alt="Flagship: ChemVecto, where I was founding engineer. It takes a chemist from one molecule to a shortlist of better ones: find look-alikes in chemical space, screen out toxicity and drug-likeness risks, rank the best trade-offs across goals, then run a quantum check on the shortlist." />
 </p>
 
 <h3 align="center"><code>devansh@os ~ $ ls ./systems</code></h3>
