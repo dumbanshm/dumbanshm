@@ -449,7 +449,7 @@ def readme():
 </p>
 
 <p align="center">
-  <a href="{HEXAGO_URL}/#decode"><img src="{a("easter-egg")}" width="60%" alt="A Go board whose stones encode a message: black = 1, white = 0, 8 stones per letter, read row by row. Opens hexago's decoder." /></a>
+  <a href="{HEXAGO_URL}/#lets-chat"><img src="{a("easter-egg")}" width="60%" alt="A Go board whose stones encode a message: black = 1, white = 0, 8 stones per letter, read row by row. Opens hexago, which decodes a real game." /></a>
 {contacts}
 </p>
 """
