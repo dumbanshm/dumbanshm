@@ -24,6 +24,8 @@ BG, PANEL, LINE = "#0b0f14", "#10161e", "#1e2732"
 TXT, MUTED, DIM = "#dfe5ec", "#9aa6b4", "#5f6c7c"
 AMZ = "#ff9900"
 OK, WARN, CRIT, CHEM, BLUE = "#2dd4bf", "#fbbf24", "#f87171", "#a78bfa", "#60a5fa"
+GO_PAPER, GO_INK = "#fafaf7", "#111111"  # hexago's own black-and-white board
+HEXAGO_URL = "https://hexago-five.vercel.app"
 SANS, MONO = "Space Grotesk", "Geist Mono"  # both SIL OFL 1.1, embedded per panel (see fonts/)
 FONT_FILES = {SANS: "fonts/SpaceGrotesk.woff2", MONO: "fonts/GeistMono.woff2"}
 
@@ -127,13 +129,17 @@ def motif_heatmap(cx, cy):  # devansh-OS: one row per tracked metric, each its o
     return "".join(g)
 
 
+def go_stone(black, stroke=1.5):
+    return f'fill="{GO_INK}"' if black else f'fill="{GO_PAPER}" stroke="{GO_INK}" stroke-width="{stroke}"'
+
+
 def motif_go(cx, cy):  # hexago
-    g = [f'<rect x="{cx-50}" y="{cy-50}" width="100" height="100" rx="6" fill="#c69c5d"/>']
+    g = [f'<rect x="{cx-50}" y="{cy-50}" width="100" height="100" fill="{GO_PAPER}" stroke="{GO_INK}" stroke-width="2"/>']
     for k in range(5):
-        g.append(f'<line x1="{cx-38}" y1="{cy-38+k*19}" x2="{cx+38}" y2="{cy-38+k*19}" stroke="#4a3518"/>'
-                 f'<line x1="{cx-38+k*19}" y1="{cy-38}" x2="{cx-38+k*19}" y2="{cy+38}" stroke="#4a3518"/>')
+        g.append(f'<line x1="{cx-38}" y1="{cy-38+k*19}" x2="{cx+38}" y2="{cy-38+k*19}" stroke="{GO_INK}"/>'
+                 f'<line x1="{cx-38+k*19}" y1="{cy-38}" x2="{cx-38+k*19}" y2="{cy+38}" stroke="{GO_INK}"/>')
     for (c, r), black in (((1, 1), 1), ((2, 1), 0), ((1, 2), 0), ((3, 2), 1), ((2, 3), 1), ((3, 3), 0), ((0, 3), 1)):
-        g.append(f'<circle cx="{cx-38+c*19}" cy="{cy-38+r*19}" r="8" fill="{"#111" if black else "#f2f2f2"}"/>')
+        g.append(f'<circle cx="{cx-38+c*19}" cy="{cy-38+r*19}" r="8" {go_stone(black)}/>')
     return "".join(g)
 
 
@@ -344,27 +350,29 @@ PROJECTS = [  # key, title, status, one line, stack, link
      "https://code-climb-nu.vercel.app"),
     ("insilicomate", "InSilicomate", "OSS", "Where could a drug bind?", "Python · 3Dmol.js",
      "https://github.com/dumbanshm/InSilicomate"),
-    ("hexago", "hexago", "OSS", "Hides messages in Go games.", "Python · Flask",
-     "https://github.com/dumbanshm/hexago"),
+    ("hexago", "hexago", "LIVE", "Hides text and images in Go games.", "Python · Flask",
+     HEXAGO_URL),
 ]
 
 
 def go_board(x, y, msg="hire me", n=9, cell=8.5):
     """hexago's scheme: black = 1, white = 0, 8 stones per character, row by row."""
     bits = "".join(f"{ord(c):08b}" for c in msg)
-    g = [f'<rect x="{x-7}" y="{y-7}" width="{(n-1)*cell+14}" height="{(n-1)*cell+14}" rx="4" fill="#c69c5d"/>']
+    g = [f'<rect x="{x-7}" y="{y-7}" width="{(n-1)*cell+14}" height="{(n-1)*cell+14}" fill="{GO_PAPER}" '
+         f'stroke="{GO_INK}" stroke-width="1.5"/>']
     for k in range(n):
-        g.append(f'<line x1="{x}" y1="{y+k*cell}" x2="{x+(n-1)*cell}" y2="{y+k*cell}" stroke="#4a3518" stroke-width=".8"/>'
-                 f'<line x1="{x+k*cell}" y1="{y}" x2="{x+k*cell}" y2="{y+(n-1)*cell}" stroke="#4a3518" stroke-width=".8"/>')
+        g.append(f'<line x1="{x}" y1="{y+k*cell}" x2="{x+(n-1)*cell}" y2="{y+k*cell}" stroke="{GO_INK}" stroke-width=".8"/>'
+                 f'<line x1="{x+k*cell}" y1="{y}" x2="{x+k*cell}" y2="{y+(n-1)*cell}" stroke="{GO_INK}" stroke-width=".8"/>')
     for i, bit in enumerate(bits):
         r, c = divmod(i, n)
-        g.append(f'<circle cx="{x+c*cell}" cy="{y+r*cell}" r="{cell*.43:.1f}" fill="{"#111" if bit == "1" else "#f2f2f2"}" '
+        g.append(f'<circle cx="{x+c*cell}" cy="{y+r*cell}" r="{cell*.43:.1f}" {go_stone(bit == "1", 1)} '
                  f'class="pop" {d(.4 + i*.03)}/>')
     return "".join(g)
 
 
 TINT = {"devansh-os": OK, "confidently-wrong": CRIT, "codeweb": CHEM, "codeclimb": WARN,
-        "insilicomate": BLUE, "hexago": "#c69c5d"}
+        "insilicomate": BLUE, "hexago": GO_PAPER}
+WATERMARK = {"hexago": ".05"}  # its board is paper-white, so it needs less to sit as quietly as the rest
 ICONS = {"devansh-os": motif_heatmap, "confidently-wrong": motif_wrong, "codeweb": motif_graph,
          "codeclimb": motif_climb, "insilicomate": motif_molecule, "hexago": motif_go}
 
@@ -375,7 +383,7 @@ def card(i, key, title, status, line, stack, link):
     c = OK if status == "LIVE" else DIM
     b = [f'<rect width="{CW}" height="{H}" rx="14" fill="{BG}"/>',
          f'<clipPath id="c"><rect width="{CW}" height="{H}" rx="14"/></clipPath>',
-         f'<g clip-path="url(#c)"><g opacity=".11" transform="translate({CW-110} {H/2+4}) scale(2) '
+         f'<g clip-path="url(#c)"><g opacity="{WATERMARK.get(key, ".11")}" transform="translate({CW-110} {H/2+4}) scale(2) '
          f'translate({-(CW-110)} {-(H/2+4)})">{ICONS[key](CW-110, H/2+4)}</g></g>',
          f'<rect x=".5" y=".5" width="{CW-1}" height="{H-1}" rx="14" fill="none" stroke="{LINE}"/>',
          f'<g class="rise" {d(.05 + i*.06)}>',
@@ -399,7 +407,7 @@ def easter_egg():
     for i, (ln, cl) in enumerate(lines):
         if ln:
             b.append(f'<text x="180" y="{46 + i*20}" font-size="15" class="mo {cl} fade" {d(2.2 + i*.12)}>{esc(ln)}</text>')
-    b.append(f'<text x="180" y="{H-16}" font-size="12" class="mo d fade" {d(3)}>encoded with hexago</text>')
+    b.append(f'<text x="180" y="{H-16}" font-size="12" class="mo m fade" {d(3)}>decode one on hexago ↗</text>')
     svg("easter-egg", H, "".join(b), w=EGG_W, box=False)
 
 
@@ -441,7 +449,7 @@ def readme():
 </p>
 
 <p align="center">
-  <img src="{a("easter-egg")}" width="60%" alt="A Go board whose stones encode a message: black = 1, white = 0, 8 stones per letter, read row by row." />
+  <a href="{HEXAGO_URL}/#decode"><img src="{a("easter-egg")}" width="60%" alt="A Go board whose stones encode a message: black = 1, white = 0, 8 stones per letter, read row by row. Opens hexago's decoder." /></a>
 {contacts}
 </p>
 """
