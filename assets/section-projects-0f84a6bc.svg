@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="840" height="40" viewBox="0 0 840 40" role="img"><style>
+text{font-family:ui-monospace,SFMono-Regular,'JetBrains Mono',Menlo,Consolas,monospace;fill:#dfe5ec}
+.m{fill:#9aa6b4}.d{fill:#5f6c7c}.chem{fill:#a78bfa}
+.b{font-weight:700}
+.fade{opacity:0;animation:fade .6s ease-out forwards}
+.rise{opacity:0;animation:rise .6s cubic-bezier(.2,.8,.2,1) forwards}
+.draw{animation:draw 1s ease-out forwards}
+.pop{opacity:0;transform-box:fill-box;transform-origin:center;animation:pop .45s cubic-bezier(.3,1.6,.5,1) forwards}
+@keyframes fade{to{opacity:1}}
+@keyframes rise{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+@keyframes draw{to{stroke-dashoffset:0}}
+@keyframes pop{from{opacity:0;transform:scale(.2)}to{opacity:1;transform:scale(1)}}
+</style><text x="2" y="26" font-size="13" class="d">projects</text><line x1="78" y1="21" x2="838" y2="21" stroke="#1e2732"/></svg>

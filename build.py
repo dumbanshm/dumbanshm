@@ -1,12 +1,19 @@
-"""Generate every SVG panel for the profile README.  python3 build.py"""
+"""Generate the profile README and its SVG panels.   python3 build.py
+
+Every asset is written as <name>-<content hash>.svg and README.md is regenerated to point at
+them, so GitHub's image cache can never serve a stale panel after an edit.
+"""
+import hashlib
 import math
+import random
 from pathlib import Path
 
-OUT = Path(__file__).parent / "assets"
+ROOT = Path(__file__).parent
+OUT = ROOT / "assets"
 OUT.mkdir(exist_ok=True)
 W = 840
 
-# ── palette (devansh-OS) ─────────────────────────────────────────────
+# ── palette ──────────────────────────────────────────────────────────
 BG, PANEL, LINE = "#0b0f14", "#10161e", "#1e2732"
 TXT, MUTED, DIM = "#dfe5ec", "#9aa6b4", "#5f6c7c"
 AMZ = "#ff9900"
@@ -15,150 +22,142 @@ MONO = "ui-monospace,SFMono-Regular,'JetBrains Mono',Menlo,Consolas,monospace"
 
 BASE_CSS = f"""
 text{{font-family:{MONO};fill:{TXT}}}
-.m{{fill:{MUTED}}}.d{{fill:{DIM}}}.ok{{fill:{OK}}}.warn{{fill:{WARN}}}.crit{{fill:{CRIT}}}.chem{{fill:{CHEM}}}.blue{{fill:{BLUE}}}
+.m{{fill:{MUTED}}}.d{{fill:{DIM}}}.chem{{fill:{CHEM}}}
 .b{{font-weight:700}}
 .fade{{opacity:0;animation:fade .6s ease-out forwards}}
 .rise{{opacity:0;animation:rise .6s cubic-bezier(.2,.8,.2,1) forwards}}
-.slide{{opacity:0;animation:slide .5s ease-out forwards}}
 .draw{{animation:draw 1s ease-out forwards}}
 .pop{{opacity:0;transform-box:fill-box;transform-origin:center;animation:pop .45s cubic-bezier(.3,1.6,.5,1) forwards}}
-.pulse{{transform-box:fill-box;transform-origin:center;animation:pulse 2.4s ease-in-out infinite}}
-.blink{{animation:blink 1.1s steps(1) infinite}}
 @keyframes fade{{to{{opacity:1}}}}
 @keyframes rise{{from{{opacity:0;transform:translateY(8px)}}to{{opacity:1;transform:none}}}}
-@keyframes slide{{from{{opacity:0;transform:translateX(-10px)}}to{{opacity:1;transform:none}}}}
 @keyframes draw{{to{{stroke-dashoffset:0}}}}
 @keyframes pop{{from{{opacity:0;transform:scale(.2)}}to{{opacity:1;transform:scale(1)}}}}
-@keyframes pulse{{0%,100%{{opacity:1;transform:scale(1)}}50%{{opacity:.35;transform:scale(.8)}}}}
-@keyframes blink{{0%{{opacity:1}}50%{{opacity:0}}}}
 """
+
+BUILT = {}  # logical name -> hashed filename
 
 
 def esc(s):
     return str(s).replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
 
 
-def svg(name, h, body, css="", w=W):
+def svg(name, h, body, css="", w=W, box=True):
+    frame = f'<rect x=".5" y=".5" width="{w-1}" height="{h-1}" rx="14" fill="{BG}" stroke="{LINE}"/>' if box else ""
     doc = (f'<svg xmlns="http://www.w3.org/2000/svg" width="{w}" height="{h}" viewBox="0 0 {w} {h}" '
-           f'role="img"><style>{BASE_CSS}{css}</style>'
-           f'<rect x=".5" y=".5" width="{w-1}" height="{h-1}" rx="12" fill="{BG}" stroke="{LINE}"/>'
-           f'{body}</svg>')
-    (OUT / name).write_text(doc)
+           f'role="img"><style>{BASE_CSS}{css}</style>{frame}{body}</svg>')
+    fname = f"{name}-{hashlib.sha1(doc.encode()).hexdigest()[:8]}.svg"
+    (OUT / fname).write_text(doc)
+    BUILT[name] = fname
 
 
 def d(s):  # animation-delay attribute
     return f'style="animation-delay:{s:.2f}s"'
 
 
-def wrap(s, n):
-    lines, cur = [], ""
-    for w in s.split():
-        if len(cur) + len(w) + (1 if cur else 0) > n:
-            lines.append(cur); cur = w
-        else:
-            cur = f"{cur} {w}" if cur else w
-    return lines + ([cur] if cur else [])
+def label(text, right=""):
+    """Small muted label in the top corners of a panel (replaces the old window chrome)."""
+    r = f'<text x="{W-32}" y="38" font-size="12" class="d" text-anchor="end">{esc(right)}</text>' if right else ""
+    return f'<text x="32" y="38" font-size="12" class="d">{esc(text)}</text>{r}'
 
 
-def titlebar(label, right="", y=26):
-    return (f'<circle cx="22" cy="{y-4}" r="5" fill="#ff5f56"/><circle cx="38" cy="{y-4}" r="5" fill="#ffbd2e"/>'
-            f'<circle cx="54" cy="{y-4}" r="5" fill="#27c93f"/>'
-            f'<text x="74" y="{y}" font-size="12" class="m">{esc(label)}</text>'
-            f'<text x="{W-20}" y="{y}" font-size="12" class="m" text-anchor="end">{esc(right)}</text>'
-            f'<line x1="0" y1="{y+12}" x2="{W}" y2="{y+12}" stroke="{LINE}"/>')
+# ── header motifs: one element from each project, cycling ────────────
+def motif_molecule(cx, cy):  # ChemVecto / InSilicomate
+    R = 26
+    pts = [(cx + R * math.cos(math.radians(90 + 60 * k)), cy - R * math.sin(math.radians(90 + 60 * k))) for k in range(6)]
+    g = [f'<path d="M{" L".join(f"{x:.1f},{y:.1f}" for x, y in pts)} Z" fill="none" stroke="{MUTED}" stroke-width="2.4" stroke-linejoin="round"/>']
+    for (x, y), (dx, dy), col in ((pts[0], (0, -22), CRIT), (pts[3], (0, 22), BLUE), (pts[2], (-19, 11), MUTED), (pts[5], (19, -11), MUTED)):
+        g.append(f'<line x1="{x:.1f}" y1="{y:.1f}" x2="{x+dx:.1f}" y2="{y+dy:.1f}" stroke="{MUTED}" stroke-width="2.4"/>'
+                 f'<circle cx="{x+dx:.1f}" cy="{y+dy:.1f}" r="6" fill="{col}"/>')
+    return "".join(g)
 
 
-# ── 1. header: name, thesis, caffeine molecule ───────────────────────
-def caffeine(cx, cy, r, t0):
-    """Ball-and-stick caffeine (C8H10N4O2): fused 6+5 purine core with substituents."""
-    P = lambda a, rr=r: (cx + rr * math.cos(math.radians(a)), cy - rr * math.sin(math.radians(a)))
-    hexa = {k: P(a) for k, a in zip(["C5", "C6", "N1", "C2", "N3", "C4"], [30, 90, 150, 210, 270, 330])}
-    ax, ay = hexa["C5"]; bx, by = hexa["C4"]
-    mx, my = (ax + bx) / 2, (ay + by) / 2
-    apo = r / (2 * math.tan(math.radians(36)))  # pentagon apothem, side = hexagon side = r
-    pc = (mx + apo, my)
-    R5 = r / (2 * math.sin(math.radians(36)))
-    ang = lambda p: math.degrees(math.atan2(-(p[1] - pc[1]), p[0] - pc[0]))
-    a5 = ang(hexa["C5"])
-    pent = {"N7": None, "C8": None, "N9": None}
-    for i, k in enumerate(["N7", "C8", "N9"], 1):
-        a = math.radians(a5 - 72 * i)
-        pent[k] = (pc[0] + R5 * math.cos(a), pc[1] - R5 * math.sin(a))
-    at = {**hexa, **pent}
+def motif_graph(cx, cy):  # codeweb
+    nodes = [(0, 0), (-46, -26), (40, -34), (-50, 24), (44, 22), (6, 44), (-8, -50)]
+    edges = [(0, 1), (0, 2), (0, 3), (0, 4), (4, 5), (3, 5), (1, 6), (2, 6), (2, 4)]
+    g = [f'<line x1="{cx+nodes[a][0]}" y1="{cy+nodes[a][1]}" x2="{cx+nodes[b][0]}" y2="{cy+nodes[b][1]}" stroke="{DIM}" stroke-width="1.8"/>' for a, b in edges]
+    for i, (x, y) in enumerate(nodes):
+        g.append(f'<circle cx="{cx+x}" cy="{cy+y}" r="{9 if i == 0 else 6}" fill="{OK if i == 0 else BLUE}"/>')
+    return "".join(g)
 
-    def out(k, centre, L=r * .9):
-        x, y = at[k]; vx, vy = x - centre[0], y - centre[1]; n = math.hypot(vx, vy)
-        return (x + vx / n * L, y + vy / n * L)
-    ring_c = (cx, cy)
-    sub = {"O6": out("C6", ring_c), "Me1": out("N1", ring_c), "O2": out("C2", ring_c),
-           "Me3": out("N3", ring_c), "Me7": out("N7", pc)}
-    at.update(sub)
-    bonds = [("C5", "C6"), ("C6", "N1"), ("N1", "C2"), ("C2", "N3"), ("N3", "C4"), ("C4", "C5", 2),
-             ("C5", "N7"), ("N7", "C8"), ("C8", "N9", 2), ("N9", "C4"),
-             ("C6", "O6", 2), ("C2", "O2", 2), ("N1", "Me1"), ("N3", "Me3"), ("N7", "Me7")]
-    g = []
-    for i, b in enumerate(bonds):
-        (x1, y1), (x2, y2) = at[b[0]], at[b[1]]
-        L = math.hypot(x2 - x1, y2 - y1)
-        lines = [(0, 0)]
-        if len(b) == 3:
-            nx, ny = -(y2 - y1) / L * 3, (x2 - x1) / L * 3
-            lines = [(nx, ny), (-nx, -ny)]
-        for ox, oy in lines:
-            g.append(f'<line x1="{x1+ox:.1f}" y1="{y1+oy:.1f}" x2="{x2+ox:.1f}" y2="{y2+oy:.1f}" stroke="{DIM}" '
-                     f'stroke-width="2.4" stroke-linecap="round" stroke-dasharray="{L:.1f}" stroke-dashoffset="{L:.1f}" '
-                     f'class="draw" {d(t0 + .9 + i * .06)}/>')
-    col = {"N": BLUE, "O": CRIT, "C": "#9aa6b2", "M": "#5d6977"}
-    for i, (k, (x, y)) in enumerate(at.items()):
-        e = k[0]
-        rad = 9 if e in "NO" else 7 if e == "C" else 5.5
-        g.append(f'<circle cx="{x:.1f}" cy="{y:.1f}" r="{rad}" fill="{col[e]}" class="pop" {d(t0 + i * .05)}/>')
-        if e in "NO":
-            g.append(f'<text x="{x:.1f}" y="{y+3.5:.1f}" font-size="10" text-anchor="middle" class="b pop" '
-                     f'style="fill:{BG};animation-delay:{t0 + i * .05:.2f}s">{e}</text>')
-    return f'<g class="float">{"".join(g)}</g>'
+
+def motif_heatmap(cx, cy):  # devansh-OS
+    random.seed(4)
+    shades = ["#161b22", "#0e4429", "#006d32", "#26a641", "#39d353"]
+    return "".join(f'<rect x="{cx-62+c*18}" y="{cy-44+r*18}" width="14" height="14" rx="3" fill="{random.choice(shades)}"/>'
+                   for r in range(5) for c in range(7))
+
+
+def motif_go(cx, cy):  # hexago
+    g = [f'<rect x="{cx-50}" y="{cy-50}" width="100" height="100" rx="6" fill="#c69c5d"/>']
+    for k in range(5):
+        g.append(f'<line x1="{cx-38}" y1="{cy-38+k*19}" x2="{cx+38}" y2="{cy-38+k*19}" stroke="#4a3518"/>'
+                 f'<line x1="{cx-38+k*19}" y1="{cy-38}" x2="{cx-38+k*19}" y2="{cy+38}" stroke="#4a3518"/>')
+    for (c, r), black in (((1, 1), 1), ((2, 1), 0), ((1, 2), 0), ((3, 2), 1), ((2, 3), 1), ((3, 3), 0), ((0, 3), 1)):
+        g.append(f'<circle cx="{cx-38+c*19}" cy="{cy-38+r*19}" r="8" fill="{"#111" if black else "#f2f2f2"}"/>')
+    return "".join(g)
+
+
+def motif_calibration(cx, cy):  # confidently-wrong
+    x0, y0, s = cx - 50, cy + 50, 100
+    g = [f'<path d="M{x0},{y0-s} V{y0} H{x0+s}" fill="none" stroke="{DIM}" stroke-width="1.8"/>',
+         f'<line x1="{x0}" y1="{y0}" x2="{x0+s}" y2="{y0-s}" stroke="{DIM}" stroke-dasharray="4 4"/>']
+    for i, h in enumerate((.18, .3, .36, .42, .5)):  # overconfident: bars sit under the diagonal
+        g.append(f'<rect x="{x0+4+i*19}" y="{y0-h*s}" width="14" height="{h*s}" rx="2" fill="{CRIT}" fill-opacity=".75"/>')
+    return "".join(g)
+
+
+def motif_climb(cx, cy):  # codeClimb
+    pts = [(-55, 40), (-35, 28), (-18, 34), (0, 10), (18, 16), (36, -14), (55, -40)]
+    path = "M" + " L".join(f"{cx+x},{cy+y}" for x, y in pts)
+    return (f'<path d="{path}" fill="none" stroke="{WARN}" stroke-width="2.6" stroke-linejoin="round"/>'
+            + "".join(f'<circle cx="{cx+x}" cy="{cy+y}" r="4" fill="{WARN}"/>' for x, y in pts))
+
+
+MOTIFS = [("chemvecto", motif_molecule), ("codeweb", motif_graph), ("devansh-os", motif_heatmap),
+          ("hexago", motif_go), ("confidently-wrong", motif_calibration), ("codeclimb", motif_climb)]
 
 
 def header():
-    tags = [("backend systems", OK), ("data pipelines", BLUE), ("cheminformatics", CHEM), ("ML evaluation", WARN)]
-    body = [titlebar("devansh@os ~ $ whoami", "Bengaluru · BITS Pilani '27")]
-    body.append(f'<text x="32" y="98" font-size="40" class="b rise" {d(.2)}>Devansh Mehta</text>')
-    body.append(f'<text x="34" y="128" font-size="15" class="rise" {d(.5)}>Backend &amp; data systems — '
-                f'and dashboards that keep me honest.</text>')
-    body.append(f'<text x="34" y="150" font-size="15" class="m rise" {d(.65)}>SDE intern @ <tspan style="fill:{AMZ}">Amazon</tspan>'
-                f' · founding engineer @ <tspan class="chem">ChemVecto</tspan></text>')
-    x = 34
-    for i, (t, c) in enumerate(tags):
-        wpx = len(t) * 7.3 + 22
-        body.append(f'<g class="rise" {d(1.0 + i * .12)}><rect x="{x}" y="176" width="{wpx:.0f}" height="24" rx="12" '
-                    f'fill="none" stroke="{c}" stroke-opacity=".55"/><text x="{x + wpx/2:.0f}" y="192" font-size="12" '
-                    f'text-anchor="middle" style="fill:{c}">{t}</text></g>')
-        x += wpx + 8
-    body.append(f'<text x="34" y="232" font-size="12" class="d fade" {d(1.6)}>status: <tspan class="ok">● shipping</tspan>'
-                f' · CS + Bio Sciences dual degree, class of \'27<tspan class="blink"> _</tspan></text>')
-    body.append(caffeine(690, 140, 30, .4))
-    css = ".float{animation:float 6s ease-in-out 2.5s infinite}@keyframes float{50%{transform:translateY(-5px)}}"
-    svg("header.svg", 256, "".join(body), css)
+    H = 220
+    b = [f'<text x="40" y="92" font-size="44" class="b rise" {d(.1)}>Devansh Mehta</text>',
+         f'<text x="42" y="128" font-size="16" class="rise" {d(.3)}>Backend &amp; data systems.</text>',
+         f'<text x="42" y="156" font-size="14" class="m rise" {d(.45)}>SDE intern @ <tspan style="fill:{AMZ}">Amazon</tspan>'
+         f' · ex-founding engineer @ <tspan class="chem">ChemVecto</tspan></text>',
+         f'<text x="42" y="182" font-size="13" class="d rise" {d(.6)}>BITS Pilani · CS + Biological Sciences · \'27</text>']
+    n, step = len(MOTIFS), 2.6
+    cycle = n * step
+    on, hold = 100 * .5 / cycle, 100 * step / cycle
+    css = (f".mo{{opacity:0;animation:cyc {cycle}s ease-in-out infinite both}}"
+           f"@keyframes cyc{{0%{{opacity:0;transform:translateY(6px)}}{on:.1f}%{{opacity:1;transform:none}}"
+           f"{hold:.1f}%{{opacity:1;transform:none}}{hold+on:.1f}%{{opacity:0;transform:translateY(-6px)}}100%{{opacity:0}}}}")
+    for i, (name, fn) in enumerate(MOTIFS):
+        b.append(f'<g class="mo" style="animation-delay:{i*step:.1f}s">{fn(700, 100)}'
+                 f'<text x="700" y="190" font-size="11" text-anchor="middle" class="d">{name}</text></g>')
+    svg("header", H, "".join(b), css)
 
 
-# ── 2. flagship: what ChemVecto does (not how) ───────────────────────
+# ── contact buttons ──────────────────────────────────────────────────
+def button(name, text):
+    w, h = 132, 38
+    body = (f'<rect x=".5" y=".5" width="{w-1}" height="{h-1}" rx="19" fill="{BG}" stroke="{LINE}"/>'
+            f'<text x="{w/2}" y="24" font-size="13" text-anchor="middle">{esc(text)}</text>')
+    svg(name, h, body, w=w, box=False)
+
+
+# ── flagship: what ChemVecto does (not how) ──────────────────────────
 def flagship():
-    import random
-    H = 336
-    b = [titlebar("flagship · ChemVecto", "founding engineer · Mar–Jun 2026")]
-    b.append(f'<text x="32" y="80" font-size="24" class="b rise" {d(.1)}>Chem<tspan class="chem">Vecto</tspan></text>')
-    b.append(f'<text x="32" y="104" font-size="14" class="m rise" {d(.25)}>Screen chemical space. Then go quantum.</text>')
-    b.append(f'<text x="32" y="134" font-size="13" class="rise" {d(.4)}>Takes a chemist from one molecule to a shortlist of better ones worth making.</text>')
+    H = 300
+    b = [label("featured", "founding engineer · 2026")]
+    b.append(f'<text x="32" y="86" font-size="26" class="b rise" {d(.1)}>Chem<tspan class="chem">Vecto</tspan></text>')
+    b.append(f'<text x="32" y="114" font-size="14" class="m rise" {d(.25)}>From one molecule to a shortlist worth making.</text>')
 
-    cy, n = 208, 5
+    cy, n = 190, 5
     cxs = [32 + (W - 64) * (i + .5) / n for i in range(n)]
-    steps = [("a molecule", "drawn or pasted"), ("its look-alikes", "in chemical space"),
-             ("risk screen", "tox & drug-likeness"), ("best trade-offs", "ranked across goals"),
-             ("quantum check", "on the shortlist")]
+    steps = ["a molecule", "its look-alikes", "risk screen", "best trade-offs", "quantum check"]
     t0 = lambda i: .8 + i * .55
 
     # 1 — a molecule
-    x0 = cxs[0]; R = 20
+    x0, R = cxs[0], 20
     pts = [(x0 + R * math.cos(math.radians(90 + 60 * k)), cy - R * math.sin(math.radians(90 + 60 * k))) for k in range(6)]
     ring = "M" + " L".join(f"{x:.1f},{y:.1f}" for x, y in pts) + " Z"
     b.append(f'<path d="{ring}" fill="none" stroke="{MUTED}" stroke-width="2.2" stroke-linejoin="round" '
@@ -168,7 +167,8 @@ def flagship():
                  f'<circle cx="{x+dx:.1f}" cy="{y+dy:.1f}" r="5" fill="{col}" class="pop" {d(t0(0)+.5)}/>')
 
     # 2 — look-alikes in chemical space
-    random.seed(11); x1 = cxs[1]; cloud = []
+    random.seed(11)
+    x1, cloud = cxs[1], []
     while len(cloud) < 46:
         x, y = random.gauss(0, 1), random.gauss(0, 1)
         if (x / 1.6) ** 2 + (y / 1.0) ** 2 < 2.2:
@@ -185,7 +185,7 @@ def flagship():
                  f'<circle cx="{x:.1f}" cy="{y:.1f}" r="3" fill="{CHEM}" class="pop" {d(t0(1)+.5+i*.04)}/>')
     b.append(f'<circle cx="{q[0]:.1f}" cy="{q[1]:.1f}" r="5" fill="{TXT}" class="pop" {d(t0(1)+.3)}/>')
 
-    # 3 — risk screen: some candidates pass, some get flagged
+    # 3 — risk screen
     x2 = cxs[2]
     for i, ok in enumerate([1, 0, 1, 1, 0, 1, 0, 1]):
         x, y = x2 - 45 + (i % 4) * 30, cy - 14 + (i // 4) * 28
@@ -195,22 +195,22 @@ def flagship():
             b.append(f'<path d="M{x-4},{y-4} L{x+4},{y+4} M{x+4},{y-4} L{x-4},{y+4}" stroke="{CRIT}" stroke-width="1.8" '
                      f'stroke-linecap="round" class="fade" {d(t0(2)+.5)}/>')
 
-    # 4 — best trade-offs: a frontier across two goals
-    x3 = cxs[3]; ax, ay = x3 - 46, cy + 30
+    # 4 — best trade-offs
+    x3 = cxs[3]
+    ax, ay = x3 - 46, cy + 30
     b.append(f'<path d="M{ax},{ay-62} V{ay} H{ax+96}" fill="none" stroke="{LINE}" stroke-width="1.5" class="fade" {d(t0(3))}/>')
     random.seed(3)
     for i in range(14):
         px, py = ax + 8 + random.random() * 70, ay - 6 - random.random() * 44
         b.append(f'<circle cx="{px:.1f}" cy="{py:.1f}" r="2.4" fill="{DIM}" class="fade" {d(t0(3)+.1+i*.02)}/>')
     front = [(ax + 8, ay - 56), (ax + 34, ay - 50), (ax + 58, ay - 38), (ax + 80, ay - 18)]
-    path = "M" + " L".join(f"{x},{y}" for x, y in front)
     L = sum(math.dist(front[i], front[i + 1]) for i in range(3))
-    b.append(f'<path d="{path}" fill="none" stroke="{BLUE}" stroke-width="1.6" stroke-dasharray="{L:.0f}" '
-             f'stroke-dashoffset="{L:.0f}" class="draw" {d(t0(3)+.4)}/>')
+    b.append(f'<path d="M{" L".join(f"{x},{y}" for x, y in front)}" fill="none" stroke="{BLUE}" stroke-width="1.6" '
+             f'stroke-dasharray="{L:.0f}" stroke-dashoffset="{L:.0f}" class="draw" {d(t0(3)+.4)}/>')
     for i, (x, y) in enumerate(front):
         b.append(f'<circle cx="{x}" cy="{y}" r="3.6" fill="{BLUE}" class="pop" {d(t0(3)+.5+i*.07)}/>')
 
-    # 5 — quantum check: an orbital drawn as contour lobes
+    # 5 — quantum check
     x4 = cxs[4]
     for k, (ry, rx, op) in enumerate(((26, 16, .9), (19, 11, .65), (11, 6, .4))):
         for sgn, col in ((-1, BLUE), (1, CHEM)):
@@ -220,119 +220,105 @@ def flagship():
                      f'stroke-width="1.5" stroke-dasharray="{per:.1f}" stroke-dashoffset="{per:.1f}" class="draw" {d(t0(4)+k*.15)}/>')
     b.append(f'<circle cx="{x4:.1f}" cy="{cy}" r="3" fill="{TXT}" class="pop" {d(t0(4))}/>')
 
-    # connectors + labels
     for i in range(n - 1):
         mx = (cxs[i] + cxs[i + 1]) / 2
         b.append(f'<text x="{mx:.0f}" y="{cy+5}" font-size="16" text-anchor="middle" class="d fade" {d(t0(i)+.4)}>›</text>')
-    for i, (a, sub) in enumerate(steps):
-        b.append(f'<g class="rise" {d(t0(i)+.2)}><text x="{cxs[i]:.0f}" y="{cy+66}" font-size="13" text-anchor="middle" class="b">{esc(a)}</text>'
-                 f'<text x="{cxs[i]:.0f}" y="{cy+85}" font-size="11.5" text-anchor="middle" class="m">{esc(sub)}</text></g>')
-    svg("chemvecto.svg", H, "".join(b))
+    for i, a in enumerate(steps):
+        b.append(f'<text x="{cxs[i]:.0f}" y="{cy+72}" font-size="13" text-anchor="middle" class="m rise" {d(t0(i)+.2)}>{esc(a)}</text>')
+    svg("chemvecto", H, "".join(b))
 
 
-# ── 3. project cards ─────────────────────────────────────────────────
-CW, CH = 412, 176
-PROJECTS = [
-    ("devansh-OS", "OSS", OK, "Self-hosted personal analytics that flags what I've been neglecting. Plug-in providers unify "
-     "8 data sources; sub-50ms reads.", "FastAPI · SQLite · APScheduler · PyInstaller", "25MB native macOS app · 7-day sprint"),
-    ("confidently-wrong", "LIVE", OK, "Trick an open-source 421M-param model into confident wrong answers. ~2.4k examples scored on "
-     "ECE/Brier; shipped 6/12 missions on evidence.", "FastAPI on Cloud Run · Next.js · Firebase", "solo · live leaderboard · LLM judge"),
-    ("codeweb", "LIVE", OK, "Turns any local or GitHub repo into an interactive dependency graph of files, functions and "
-     "imports, with AI node explanations.", "Node · Neo4j · Groq · Render", "multi-tenant · batched UNWIND ingest"),
-    ("codeClimb", "LIVE", OK, "Codeforces training PWA: personalized daily drills from your rating history, AI hints and a "
-     "live friends leaderboard.", "React Native · Expo · Firebase · Vercel", "~92% fewer API calls via caching"),
-    ("InSilicomate", "OSS", CHEM, "Consensus binding-site finder (CASTp × COACH-D) that auto-preps AutoDock Vina "
-     "docking runs, with 3D pocket viewer.", "Python · 3Dmol.js · AutoDock Vina", "structural bio"),
-    ("hexago", "OSS", CHEM, "Steganography in Go: hides text and images inside perfectly valid SGF game records.",
-     "Python · Flask · Pillow", "1 bit / stone"),
+# ── project cards ────────────────────────────────────────────────────
+CW, CH = 412, 118
+PROJECTS = [  # key, title, status, one line, stack, link
+    ("devansh-os", "devansh-OS", "OSS", "Tells me what I've been neglecting.", "FastAPI · SQLite",
+     "https://github.com/dumbanshm/devansh-OS"),
+    ("confidently-wrong", "confidently-wrong", "LIVE", "Make an AI confidently wrong.", "FastAPI · Next.js",
+     "https://confidently-wrong-silk.vercel.app"),
+    ("codeweb", "codeweb", "LIVE", "Any repo → a dependency graph.", "Node · Neo4j",
+     "https://codeweb-8z86.onrender.com"),
+    ("codeclimb", "codeClimb", "LIVE", "Daily Codeforces drills.", "React Native · Firebase",
+     "https://code-climb-nu.vercel.app"),
+    ("insilicomate", "InSilicomate", "OSS", "Where could a drug bind?", "Python · 3Dmol.js",
+     "https://github.com/dumbanshm/InSilicomate"),
+    ("hexago", "hexago", "OSS", "Hides messages in Go games.", "Python · Flask",
+     "https://github.com/dumbanshm/hexago"),
 ]
 
 
-def card(name, status, accent, desc, stack, badge, i):
-    b = [f'<rect x=".5" y=".5" width="{CW-1}" height="{CH-1}" rx="12" fill="{BG}" stroke="{LINE}"/>',
-         f'<rect x="0" y="16" width="3" height="28" rx="1.5" fill="{accent}"/>',
-         f'<text x="20" y="36" font-size="17" class="b slide" {d(.1)}>{esc(name)}</text>']
-    sc = OK if status == "LIVE" else MUTED
-    b.append(f'<circle cx="{CW-70}" cy="31" r="4" fill="{sc}" class="{"pulse" if status == "LIVE" else ""}"/>'
-             f'<text x="{CW-60}" y="35" font-size="11" style="fill:{sc}" class="b">{status}</text>')
-    for j, ln in enumerate(wrap(desc, 50)[:3]):
-        b.append(f'<text x="20" y="{64 + j*18}" font-size="12.5" class="fade" {d(.25 + j*.08)}>{esc(ln)}</text>')
-    b.append(f'<line x1="20" y1="{CH-40}" x2="{CW-20}" y2="{CH-40}" stroke="{LINE}"/>')
-    b.append(f'<text x="20" y="{CH-17}" font-size="11" class="m fade" {d(.6)}>{esc(stack)}</text>')
-    b.append(f'<text x="20" y="{CH-52}" font-size="11.5" class="fade" style="fill:{accent};animation-delay:.7s">▸ {esc(badge)}</text>')
-    doc = (f'<svg xmlns="http://www.w3.org/2000/svg" width="{CW}" height="{CH}" viewBox="0 0 {CW} {CH}" role="img">'
-           f'<style>{BASE_CSS}</style>{"".join(b)}</svg>')
-    (OUT / f"card-{name.lower()}.svg").write_text(doc)
-
-
-# ── 4. neglect detection (the grass joke) ────────────────────────────
-def neglect():
-    rows = [
-        ("✕", CRIT, "GitHub graph:", "mostly grass. The real work lives in private repos and at my day job."),
-        ("✓", OK, "Shipping:", "3 projects live · SDE intern @ Amazon since July 2026."),
-    ]
-    b = [titlebar("NEGLECT DETECTION", "✕ 1 critical   ✓ 1 ok")]
-    b.append(f'<text x="32" y="68" font-size="12" class="m fade">// devansh-OS rule: the data never lies, so neither does this panel.</text>')
-    for i, (ic, c, k, v) in enumerate(rows):
-        y = 100 + i * 28; t = .4 + i * .35
-        b.append(f'<g class="slide" {d(t)}><text x="32" y="{y}" font-size="14" class="b" style="fill:{c}">{ic}</text>'
-                 f'<text x="56" y="{y}" font-size="13" class="b" style="fill:{c}">{esc(k)}</text>'
-                 f'<text x="{56 + len(k)*8 + 10}" y="{y}" font-size="13">{esc(v)}</text></g>')
-    # tiny grass strip — 53 weeks, mostly empty, a few bursts
-    import random
-    random.seed(7)
-    gx, gy = 32, 166
-    for wk in range(53):
-        for dy in range(2):
-            lit = random.random() < (0.35 if 26 <= wk <= 38 else 0.05)
-            col = random.choice(["#0e4429", "#006d32", "#26a641"]) if lit else "#161b22"
-            b.append(f'<rect x="{gx + wk*14.6:.1f}" y="{gy + dy*12}" width="11" height="9" rx="2" fill="{col}"/>')
-    b.append(f'<text x="{W-32}" y="{gy+44}" font-size="10" class="d" text-anchor="end">↑ public contributions, artistically compressed</text>')
-    svg("neglect.svg", 226, "".join(b))
-
-
-# ── 5. stack ─────────────────────────────────────────────────────────
-def stack():
-    groups = [
-        ("lang", OK, ["Python", "TypeScript", "JavaScript", "SQL", "Dart"]),
-        ("backend", BLUE, ["FastAPI", "Redis/RQ", "Postgres/Supabase", "Neo4j", "SQLite", "Docker"]),
-        ("science", CHEM, ["RDKit", "PySCF", "scikit-learn", "AutoDock Vina", "3Dmol.js"]),
-        ("ship", WARN, ["Vercel", "Railway", "Render", "Modal", "Expo", "PyInstaller"]),
-    ]
-    b = [titlebar("devansh@os ~ $ cat stack.toml")]
-    for i, (k, c, items) in enumerate(groups):
-        y = 74 + i * 34
-        b.append(f'<text x="32" y="{y}" font-size="13" class="b slide" style="fill:{c};animation-delay:{.2+i*.15:.2f}s">[{k}]</text>')
-        x = 132
-        for j, it in enumerate(items):
-            wpx = len(it) * 7.4 + 18
-            b.append(f'<g class="fade" {d(.35 + i*.15 + j*.05)}><rect x="{x:.0f}" y="{y-15}" width="{wpx:.0f}" height="22" rx="5" '
-                     f'fill="{PANEL}" stroke="{LINE}"/><text x="{x + wpx/2:.0f}" y="{y}" font-size="12" text-anchor="middle">{esc(it)}</text></g>')
-            x += wpx + 7
-    svg("stack.svg", 206, "".join(b))
-
-
-# ── 6. footer: a Go board that actually hides a message (hexago) ────
-def footer():
-    msg = "hire me"
-    bits = "".join(f"{ord(ch):08b}" for ch in msg)  # 56 bits, black=1 white=0 (hexago's scheme)
-    N, cell, bx, by = 9, 11, 46, 60
-    b = [titlebar("easter-egg.sgf", "encoded with hexago")]
-    b.append(f'<rect x="{bx-9}" y="{by-9}" width="{(N-1)*cell+18}" height="{(N-1)*cell+18}" rx="4" fill="#c69c5d"/>')
-    for k in range(N):
-        b.append(f'<line x1="{bx}" y1="{by+k*cell}" x2="{bx+(N-1)*cell}" y2="{by+k*cell}" stroke="#4a3518" stroke-width="1"/>'
-                 f'<line x1="{bx+k*cell}" y1="{by}" x2="{bx+k*cell}" y2="{by+(N-1)*cell}" stroke="#4a3518" stroke-width="1"/>')
+def go_board(x, y, msg="hire me", n=9, cell=8.5):
+    """hexago's scheme: black = 1, white = 0, 8 stones per character, row by row."""
+    bits = "".join(f"{ord(c):08b}" for c in msg)
+    g = [f'<rect x="{x-7}" y="{y-7}" width="{(n-1)*cell+14}" height="{(n-1)*cell+14}" rx="4" fill="#c69c5d"/>']
+    for k in range(n):
+        g.append(f'<line x1="{x}" y1="{y+k*cell}" x2="{x+(n-1)*cell}" y2="{y+k*cell}" stroke="#4a3518" stroke-width=".8"/>'
+                 f'<line x1="{x+k*cell}" y1="{y}" x2="{x+k*cell}" y2="{y+(n-1)*cell}" stroke="#4a3518" stroke-width=".8"/>')
     for i, bit in enumerate(bits):
-        r_, c_ = divmod(i, N)
-        fill, st = ("#111", "#000") if bit == "1" else ("#f2f2f2", "#999")
-        b.append(f'<circle cx="{bx+c_*cell}" cy="{by+r_*cell}" r="4.6" fill="{fill}" stroke="{st}" class="pop" {d(.3 + i*.045)}/>')
-    b.append(f'<text x="170" y="94" font-size="13" class="m fade" {d(3.0)}>this position is not a game.</text>'
-             f'<text x="170" y="116" font-size="12" class="d fade" {d(3.3)}>(black = 1)</text>')
-    svg("footer.svg", 166, "".join(b))
+        r, c = divmod(i, n)
+        g.append(f'<circle cx="{x+c*cell}" cy="{y+r*cell}" r="3.7" fill="{"#111" if bit == "1" else "#f2f2f2"}" '
+                 f'class="pop" {d(.4 + i*.03)}/>')
+    return "".join(g)
+
+
+def card(i, key, title, status, line, stack, link):
+    b = [f'<g class="rise" {d(.05 + i*.06)}>',
+         f'<text x="24" y="42" font-size="17" class="b">{esc(title)}</text>',
+         f'<text x="24" y="70" font-size="13" class="m">{esc(line)}</text>',
+         f'<text x="24" y="{CH-22}" font-size="11.5" class="d">{esc(stack)}</text></g>']
+    if key == "hexago":
+        b.append(go_board(CW - 92, 26))
+    else:
+        live = status == "LIVE"
+        c = OK if live else DIM
+        b.append(f'<circle cx="{CW-24-len(status)*7-10}" cy="37" r="3.5" fill="{c}"/>'
+                 f'<text x="{CW-24}" y="41" font-size="11" text-anchor="end" style="fill:{c}">{status}</text>')
+    svg(f"card-{key}", CH, "".join(b), w=CW)
+
+
+def section_title(name, text):
+    svg(name, 40, f'<text x="2" y="26" font-size="13" class="d">{esc(text)}</text>'
+                  f'<line x1="{len(text)*8+14}" y1="21" x2="{W-2}" y2="21" stroke="{LINE}"/>', box=False)
+
+
+# ── README ───────────────────────────────────────────────────────────
+def readme():
+    a = lambda k: f"./assets/{BUILT[k]}"
+    cards = "\n".join(
+        f'  <a href="{link}"><img src="{a("card-" + key)}" width="49%" alt="{title}: {line}" /></a>'
+        for key, title, status, line, stack, link in PROJECTS)
+    return f"""<!-- Generated by build.py. Edit that, then run `python3 build.py`. -->
+<p align="center">
+  <img src="{a("header")}" width="100%" alt="Devansh Mehta. Backend and data systems. SDE intern at Amazon, ex-founding engineer at ChemVecto. BITS Pilani, CS + Biological Sciences, 2027." />
+</p>
+
+<p align="center">
+  <a href="mailto:work.devanshmehta@gmail.com"><img src="{a("btn-email")}" height="38" alt="Email" /></a>
+  <a href="https://www.linkedin.com/in/devanshme"><img src="{a("btn-linkedin")}" height="38" alt="LinkedIn" /></a>
+</p>
+
+<p align="center">
+  <img src="{a("chemvecto")}" width="100%" alt="ChemVecto, where I was founding engineer: from one molecule to a shortlist worth making. A molecule, its look-alikes, a risk screen, the best trade-offs, then a quantum check." />
+</p>
+
+<p align="center">
+  <img src="{a("section-projects")}" width="100%" alt="Projects" />
+</p>
+
+<p align="center">
+{cards}
+</p>
+"""
 
 
 if __name__ == "__main__":
-    header(); flagship(); neglect(); footer()
+    for old in OUT.glob("*.svg"):
+        old.unlink()
+    header()
+    button("btn-email", "✉  email")
+    button("btn-linkedin", "in  linkedin")
+    flagship()
+    section_title("section-projects", "projects")
     for i, p in enumerate(PROJECTS):
-        card(*p, i)
-    print("built", sorted(p.name for p in OUT.iterdir()))
+        card(i, *p)
+    (ROOT / "README.md").write_text(readme())
+    print("built", len(BUILT), "assets")
