@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="412" height="118" viewBox="0 0 412 118" role="img"><style>
+text{font-family:ui-monospace,SFMono-Regular,'JetBrains Mono',Menlo,Consolas,monospace;fill:#dfe5ec}
+.m{fill:#9aa6b4}.d{fill:#5f6c7c}.chem{fill:#a78bfa}
+.b{font-weight:700}
+.fade{opacity:0;animation:fade .6s ease-out forwards}
+.rise{opacity:0;animation:rise .6s cubic-bezier(.2,.8,.2,1) forwards}
+.draw{animation:draw 1s ease-out forwards}
+.pop{opacity:0;transform-box:fill-box;transform-origin:center;animation:pop .45s cubic-bezier(.3,1.6,.5,1) forwards}
+@keyframes fade{to{opacity:1}}
+@keyframes rise{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+@keyframes draw{to{stroke-dashoffset:0}}
+@keyframes pop{from{opacity:0;transform:scale(.2)}to{opacity:1;transform:scale(1)}}
+</style><defs><clipPath id="gc"><rect width="412" height="118" rx="14"/></clipPath><filter id="gb" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="43"/></filter><filter id="gn" x="0" y="0" width="100%" height="100%"><feTurbulence type="fractalNoise" baseFrequency=".85" numOctaves="2" stitchTiles="stitch"/><feColorMatrix values="0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 .07 0"/></filter><linearGradient id="gf" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".07"/><stop offset="1" stop-color="#fff" stop-opacity=".015"/></linearGradient></defs><g clip-path="url(#gc)"><rect width="412" height="118" fill="#0b0f14"/><circle cx="338" cy="12" r="95" fill="#a78bfa" fill-opacity="0.42" filter="url(#gb)"/><circle cx="33" cy="124" r="66" fill="#a78bfa" fill-opacity="0.15" filter="url(#gb)"/><rect width="412" height="118" fill="url(#gf)"/><rect width="412" height="118" filter="url(#gn)"/></g><rect x=".5" y=".5" width="411" height="117" rx="14" fill="none" stroke="#fff" stroke-opacity=".09"/><path d="M14,1 H398" stroke="#fff" stroke-opacity=".22" stroke-linecap="round"/><g class="rise" style="animation-delay:0.17s"><text x="24" y="42" font-size="17" class="b">codeweb</text><text x="24" y="70" font-size="13" class="m">Any repo → a dependency graph.</text><text x="24" y="96" font-size="11.5" class="d">Node · Neo4j</text></g><circle cx="350" cy="37" r="3.5" fill="#2dd4bf"/><text x="388" y="41" font-size="11" text-anchor="end" style="fill:#2dd4bf">LIVE</text></svg>

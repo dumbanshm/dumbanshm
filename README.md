@@ -12,12 +12,12 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/dumbanshm/devansh-OS"><img src="./assets/card-devansh-os-d5d55704.svg" width="49%" alt="devansh-OS: Tells me what I've been neglecting." /></a>
-  <a href="https://confidently-wrong-silk.vercel.app"><img src="./assets/card-confidently-wrong-7f2ea739.svg" width="49%" alt="confidently-wrong: Make an AI confidently wrong." /></a>
-  <a href="https://codeweb-8z86.onrender.com"><img src="./assets/card-codeweb-7437a174.svg" width="49%" alt="codeweb: Any repo → a dependency graph." /></a>
-  <a href="https://code-climb-nu.vercel.app"><img src="./assets/card-codeclimb-3355255e.svg" width="49%" alt="codeClimb: Daily Codeforces drills." /></a>
-  <a href="https://github.com/dumbanshm/InSilicomate"><img src="./assets/card-insilicomate-9d5448fb.svg" width="49%" alt="InSilicomate: Where could a drug bind?" /></a>
-  <a href="https://github.com/dumbanshm/hexago"><img src="./assets/card-hexago-da0fc266.svg" width="49%" alt="hexago: Hides messages in Go games." /></a>
+  <a href="https://github.com/dumbanshm/devansh-OS"><img src="./assets/card-devansh-os-0bcd9275.svg" width="49%" alt="devansh-OS: Tells me what I've been neglecting." /></a>
+  <a href="https://confidently-wrong-silk.vercel.app"><img src="./assets/card-confidently-wrong-6852ea28.svg" width="49%" alt="confidently-wrong: Make an AI confidently wrong." /></a>
+  <a href="https://codeweb-8z86.onrender.com"><img src="./assets/card-codeweb-fe342de6.svg" width="49%" alt="codeweb: Any repo → a dependency graph." /></a>
+  <a href="https://code-climb-nu.vercel.app"><img src="./assets/card-codeclimb-6d86ecca.svg" width="49%" alt="codeClimb: Daily Codeforces drills." /></a>
+  <a href="https://github.com/dumbanshm/InSilicomate"><img src="./assets/card-insilicomate-c7d2d8ee.svg" width="49%" alt="InSilicomate: Where could a drug bind?" /></a>
+  <a href="https://github.com/dumbanshm/hexago"><img src="./assets/card-hexago-eb51817e.svg" width="49%" alt="hexago: Hides messages in Go games." /></a>
 </p>
 
 <p align="center">
@@ -26,7 +26,7 @@
 
 <p>
   <img align="left" src="./assets/easter-egg-4c927bc3.svg" width="61%" alt="A Go board whose stones encode a message: black = 1, white = 0, 8 stones per letter, read row by row." />
-  <a href="mailto:work.devanshmehta@gmail.com"><img src="./assets/btn-email-b6e21862.svg" width="37%" alt="Email" /></a><br>
-  <a href="https://www.linkedin.com/in/devanshme"><img src="./assets/btn-linkedin-1c639415.svg" width="37%" alt="LinkedIn" /></a><br>
-  <a href="https://drive.google.com/file/d/1qVswRn4h9XEOOss8l3NJFACKPQXICMg2/view?usp=sharing"><img src="./assets/btn-resume-ac6ba34b.svg" width="37%" alt="Resume" /></a>
+  <a href="mailto:work.devanshmehta@gmail.com"><img src="./assets/btn-email-3138a83c.svg" width="37%" alt="Email" /></a><br>
+  <a href="https://www.linkedin.com/in/devanshme"><img src="./assets/btn-linkedin-cf3f1d95.svg" width="37%" alt="LinkedIn" /></a><br>
+  <a href="https://drive.google.com/file/d/1qVswRn4h9XEOOss8l3NJFACKPQXICMg2/view?usp=sharing"><img src="./assets/btn-resume-d5695ebb.svg" width="37%" alt="Resume" /></a>
 </p>

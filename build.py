@@ -190,11 +190,28 @@ def icon(kind, x, y, col):
             f'<path d="M{x+11},{y} v5 h5 M{x+5},{y+10} h8 M{x+5},{y+14} h6" fill="none" stroke="{col}" stroke-width="1.5"/>')
 
 
+def frosted(w, h, tint, rx=14, blob=(.82, .1, .55), strength=.42):
+    """Matte frosted glass: a blurred colour blob behind a translucent frost layer, fine grain,
+    a hairline white border and a light rim along the top edge."""
+    bx, by, br = w * blob[0], h * blob[1], min(w, h) * blob[2] + 30
+    return (f'<defs><clipPath id="gc"><rect width="{w}" height="{h}" rx="{rx}"/></clipPath>'
+            f'<filter id="gb" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="{br*.45:.0f}"/></filter>'
+            f'<filter id="gn" x="0" y="0" width="100%" height="100%"><feTurbulence type="fractalNoise" baseFrequency=".85" '
+            f'numOctaves="2" stitchTiles="stitch"/><feColorMatrix values="0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 .07 0"/></filter>'
+            f'<linearGradient id="gf" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".07"/>'
+            f'<stop offset="1" stop-color="#fff" stop-opacity=".015"/></linearGradient></defs>'
+            f'<g clip-path="url(#gc)"><rect width="{w}" height="{h}" fill="{BG}"/>'
+            f'<circle cx="{bx:.0f}" cy="{by:.0f}" r="{br:.0f}" fill="{tint}" fill-opacity="{strength}" filter="url(#gb)"/>'
+            f'<circle cx="{w*.08:.0f}" cy="{h*1.05:.0f}" r="{br*.7:.0f}" fill="{tint}" fill-opacity="{strength*.35:.2f}" filter="url(#gb)"/>'
+            f'<rect width="{w}" height="{h}" fill="url(#gf)"/><rect width="{w}" height="{h}" filter="url(#gn)"/></g>'
+            f'<rect x=".5" y=".5" width="{w-1}" height="{h-1}" rx="{rx}" fill="none" stroke="#fff" stroke-opacity=".09"/>'
+            f'<path d="M{rx},1 H{w-rx}" stroke="#fff" stroke-opacity=".22" stroke-linecap="round"/>')
+
+
 def button(name, title, accent):
     """One contact row for the footer's right column."""
     w, h = 300, 48
-    body = (f'<rect x=".5" y=".5" width="{w-1}" height="{h-1}" rx="12" fill="{BG}" stroke="{LINE}"/>'
-            f'<rect x=".5" y=".5" width="{w-1}" height="{h-1}" rx="12" fill="{accent}" fill-opacity=".07"/>'
+    body = (f'{frosted(w, h, accent, rx=12, blob=(.12, .5, .9), strength=.32)}'
             f'{icon(title, 22, 15, accent)}'
             f'<text x="54" y="29" font-size="14" class="b">{esc(title)}</text>'
             f'<text x="{w-22}" y="29" font-size="14" text-anchor="end" class="m">↗</text>')
@@ -336,9 +353,7 @@ TINT = {"devansh-os": OK, "confidently-wrong": CRIT, "codeweb": CHEM, "codeclimb
 
 def card(i, key, title, status, line, stack, link):
     t = TINT[key]
-    b = [f'<defs><linearGradient id="t" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="{t}" stop-opacity=".16"/>'
-         f'<stop offset=".7" stop-color="{t}" stop-opacity="0"/></linearGradient></defs>',
-         f'<rect x=".5" y=".5" width="{CW-1}" height="{CH-1}" rx="14" fill="url(#t)" stroke="{t}" stroke-opacity=".3"/>',
+    b = [frosted(CW, CH, t),
          f'<g class="rise" {d(.05 + i*.06)}>',
          f'<text x="24" y="42" font-size="17" class="b">{esc(title)}</text>',
          f'<text x="24" y="70" font-size="13" class="m">{esc(line)}</text>',
@@ -346,7 +361,7 @@ def card(i, key, title, status, line, stack, link):
     c = OK if status == "LIVE" else DIM
     b.append(f'<circle cx="{CW-24-len(status)*7-10}" cy="37" r="3.5" fill="{c}"/>'
              f'<text x="{CW-24}" y="41" font-size="11" text-anchor="end" style="fill:{c}">{status}</text>')
-    svg(f"card-{key}", CH, "".join(b), w=CW)
+    svg(f"card-{key}", CH, "".join(b), w=CW, box=False)
 
 
 EGG_W = 520
