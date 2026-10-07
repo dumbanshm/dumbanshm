@@ -202,7 +202,7 @@ def header():
 
 
 # ── contact buttons ──────────────────────────────────────────────────
-RESUME_URL = "https://drive.google.com/file/d/1qVswRn4h9XEOOss8l3NJFACKPQXICMg2/view?usp=sharing"  # Google Drive link to the resume PDF
+RESUME_URL = "https://drive.google.com/drive/folders/1iT8INlIgLucSlDIcRWyVtYFwWAHjQjQm?usp=sharing"  # Google Drive folder with the resume
 
 
 
@@ -233,10 +233,9 @@ TILE_W, TILE_H = 104, 164  # same height as the easter egg so they share a row
 def button(name, title, accent):
     """A round contact button with its label underneath. Sits inline next to the easter egg."""
     w, h, cx = TILE_W, TILE_H, TILE_W / 2
-    body = (f'<circle cx="{cx}" cy="62" r="34" fill="#fff" fill-opacity=".04" stroke="#fff" stroke-opacity=".12"/>'
-            f'<g transform="translate({cx} 62) scale(1.6) translate({-cx} -62)">{icon(title, cx - 9, 53, accent)}</g>'
-            f'<text x="{cx}" y="126" font-size="13.5" text-anchor="middle" class="b">{esc(title)}</text>'
-            f'<text x="{cx}" y="146" font-size="11" text-anchor="middle" class="mo d">open ↗</text>')
+    body = (f'<circle cx="{cx}" cy="70" r="34" fill="#fff" fill-opacity=".04" stroke="#fff" stroke-opacity=".12"/>'
+            f'<g transform="translate({cx} 70) scale(1.6) translate({-cx} -70)">{icon(title, cx - 9, 61, accent)}</g>'
+            f'<text x="{cx}" y="134" font-size="13.5" text-anchor="middle" class="b">{esc(title)}</text>')
     svg(name, h, body, w=w, box=False)
 
 
@@ -355,17 +354,16 @@ PROJECTS = [  # key, title, status, one line, stack, link
 ]
 
 
-def go_board(x, y, msg="Let's chat!", n=11, rows=8, cell=11):
-    """hexago's scheme: black = 1, white = 0, 8 stones per character, row by row.
-    11 x 8 holds "Let's chat!" (88 bits) exactly, so no empty rows."""
+def go_board(x, y, msg="Let's chat!", n=11, cell=11):
+    """hexago's scheme: black = 1, white = 0, 8 stones per character, row by row."""
     bits = "".join(f"{ord(c):08b}" for c in msg)
-    assert len(bits) <= n * rows, "message doesn't fit on the board"
-    g = [f'<rect x="{x-7}" y="{y-7}" width="{(n-1)*cell+14}" height="{(rows-1)*cell+14}" fill="{GO_PAPER}" '
+    assert len(bits) <= n * n, "message doesn't fit on the board"
+    g = [f'<rect x="{x-7}" y="{y-7}" width="{(n-1)*cell+14}" height="{(n-1)*cell+14}" fill="{GO_PAPER}" '
          f'stroke="{GO_INK}" stroke-width="1.5"/>']
-    for k in range(rows):
+    for k in range(n):
         g.append(f'<line x1="{x}" y1="{y+k*cell}" x2="{x+(n-1)*cell}" y2="{y+k*cell}" stroke="{GO_INK}" stroke-width=".8"/>')
     for k in range(n):
-        g.append(f'<line x1="{x+k*cell}" y1="{y}" x2="{x+k*cell}" y2="{y+(rows-1)*cell}" stroke="{GO_INK}" stroke-width=".8"/>')
+        g.append(f'<line x1="{x+k*cell}" y1="{y}" x2="{x+k*cell}" y2="{y+(n-1)*cell}" stroke="{GO_INK}" stroke-width=".8"/>')
     for i, bit in enumerate(bits):
         r, c = divmod(i, n)
         g.append(f'<circle cx="{x+c*cell}" cy="{y+r*cell}" r="{cell*.43:.1f}" {go_stone(bit == "1", 1)} '
@@ -404,7 +402,7 @@ EGG_W = 416
 
 def easter_egg():
     H, cell = 164, 11
-    top = (H - 7 * cell) / 2
+    top = (H - 10 * cell) / 2
     b = [glass(EGG_W, H), go_board(36, top, cell=cell)]
     tx = 36 + 10 * cell + 36
     b.append(f'<text x="{tx}" y="{H/2 - 4}" font-size="14" class="mo fade" {d(2.2)}>' "this board isn't a game.</text>")
