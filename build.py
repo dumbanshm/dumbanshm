@@ -355,15 +355,17 @@ PROJECTS = [  # key, title, status, one line, stack, link
 ]
 
 
-def go_board(x, y, msg="Let's chat!", n=11, cell=11):
-    """hexago's scheme: black = 1, white = 0, 8 stones per character, row by row."""
+def go_board(x, y, msg="Let's chat!", n=11, rows=8, cell=11):
+    """hexago's scheme: black = 1, white = 0, 8 stones per character, row by row.
+    11 x 8 holds "Let's chat!" (88 bits) exactly, so no empty rows."""
     bits = "".join(f"{ord(c):08b}" for c in msg)
-    assert len(bits) <= n * n, "message doesn't fit on the board"
-    g = [f'<rect x="{x-7}" y="{y-7}" width="{(n-1)*cell+14}" height="{(n-1)*cell+14}" fill="{GO_PAPER}" '
+    assert len(bits) <= n * rows, "message doesn't fit on the board"
+    g = [f'<rect x="{x-7}" y="{y-7}" width="{(n-1)*cell+14}" height="{(rows-1)*cell+14}" fill="{GO_PAPER}" '
          f'stroke="{GO_INK}" stroke-width="1.5"/>']
+    for k in range(rows):
+        g.append(f'<line x1="{x}" y1="{y+k*cell}" x2="{x+(n-1)*cell}" y2="{y+k*cell}" stroke="{GO_INK}" stroke-width=".8"/>')
     for k in range(n):
-        g.append(f'<line x1="{x}" y1="{y+k*cell}" x2="{x+(n-1)*cell}" y2="{y+k*cell}" stroke="{GO_INK}" stroke-width=".8"/>'
-                 f'<line x1="{x+k*cell}" y1="{y}" x2="{x+k*cell}" y2="{y+(n-1)*cell}" stroke="{GO_INK}" stroke-width=".8"/>')
+        g.append(f'<line x1="{x+k*cell}" y1="{y}" x2="{x+k*cell}" y2="{y+(rows-1)*cell}" stroke="{GO_INK}" stroke-width=".8"/>')
     for i, bit in enumerate(bits):
         r, c = divmod(i, n)
         g.append(f'<circle cx="{x+c*cell}" cy="{y+r*cell}" r="{cell*.43:.1f}" {go_stone(bit == "1", 1)} '
@@ -397,18 +399,16 @@ def card(i, key, title, status, line, stack, link):
     svg(f"card-{key}", H, "".join(b), w=CW, box=False)
 
 
-EGG_W = 520
+EGG_W = 416
 
 
 def easter_egg():
-    H = 164
-    b = [glass(EGG_W, H), go_board(30, 27)]
-    lines = [("this board isn't a game.", ""), ("", ""), ("read it row by row:", "m"), ("black = 1, white = 0,", "m"),
-             ("8 stones per letter.", "m")]
-    for i, (ln, cl) in enumerate(lines):
-        if ln:
-            b.append(f'<text x="180" y="{46 + i*20}" font-size="15" class="mo {cl} fade" {d(2.2 + i*.12)}>{esc(ln)}</text>')
-    b.append(f'<text x="180" y="{H-16}" font-size="12" class="mo m fade" {d(3)}>decode one on hexago ↗</text>')
+    H, cell = 164, 11
+    top = (H - 7 * cell) / 2
+    b = [glass(EGG_W, H), go_board(36, top, cell=cell)]
+    tx = 36 + 10 * cell + 36
+    b.append(f'<text x="{tx}" y="{H/2 - 4}" font-size="14" class="mo fade" {d(2.2)}>' "this board isn't a game.</text>")
+    b.append(f'<text x="{tx}" y="{H/2 + 20}" font-size="12.5" class="mo m fade" {d(2.5)}>decode it on hexago ↗</text>')
     svg("easter-egg", H, "".join(b), w=EGG_W, box=False)
 
 
@@ -450,7 +450,7 @@ def readme():
 </p>
 
 <p align="center">
-  <a href="{HEXAGO_URL}/#lets-chat"><img src="{a("easter-egg")}" width="60%" alt="A Go board whose stones encode a message: black = 1, white = 0, 8 stones per letter, read row by row. Opens hexago, which decodes a real game." /></a>
+  <a href="{HEXAGO_URL}/#lets-chat"><img src="{a("easter-egg")}" width="{12.4 * EGG_W / TILE_W:.1f}%" alt="A Go board whose stones encode a message: black = 1, white = 0, 8 stones per letter, read row by row. Opens hexago, which decodes a real game." /></a>
 {contacts}
 </p>
 """
