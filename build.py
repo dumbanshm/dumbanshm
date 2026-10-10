@@ -411,12 +411,14 @@ ROUND = {"devansh-os": r_os, "confidently-wrong": r_wrong, "codeweb": r_web, "co
 BIG, BIG_LH = 176, 140.8
 
 
-def tape(kind, c, top, angle, size):
-    """A printed band across the page, scrolling forever; its text repeats in units of known width."""
+def tape(kind, c, cx, cy, angle, size, length=800):
+    """A strip of printed tape stuck across the poster: torn at both ends, casting a little shadow,
+    its text scrolling forever (the text repeats in units of known width, so the loop is seamless)."""
     ink, words = TAPE_INK, TAPES[kind]
     wd, wt, ls = 70, 900, size * .01
     space, star_r = text_width(" ", size, wdth=wd, wght=wt) + ls, size * .34
-    y = top + 29 + .686 * size / 2  # cap height centred in the 58px band
+    x0, top, h = cx - length / 2, cy - 29, 58
+    y = cy + .686 * size / 2  # cap height centred in the band
     unit, x = [], 0
     for w in words:
         unit.append(f'<text x="{x:.1f}" y="{y:.1f}" font-size="{size}" font-weight="{wt}" font-stretch="{wd}%" '
@@ -425,20 +427,29 @@ def tape(kind, c, top, angle, size):
         unit.append(sparkle(x + star_r, y - .686 * size / 2, star_r, ink))
         x += 2 * star_r + space
     L = x
-    copies = math.ceil((W + 2 * 64 + L) / L) + 1
-    run = "".join(f'<g transform="translate({k*L:.1f} 0)">{"".join(unit)}</g>' for k in range(copies))
+    run = "".join(f'<g transform="translate({x0 + k*L:.1f} 0)">{"".join(unit)}</g>' for k in range(math.ceil(length / L) + 2))
     frm, to = ("0 0", f"{-L:.1f} 0") if kind == "amz" else (f"{-L:.1f} 0", "0 0")
-    band = (f'<rect x="-64" y="{top}" width="{W+128}" height="58" fill="{c["AMZ"] if kind == "amz" else c["CHEM"]}"/>')
+
+    def torn(xe, out):  # a ragged end: little teeth pointing outward
+        random.seed(int(xe) + len(kind))
+        return [(xe + out * random.uniform(0, 7) * (k % 2 or .3), top + h * k / 8) for k in range(9)]
+    shape = ([(x0, top)] + [(x0 + length, top)] + torn(x0 + length, 1)[1:] + [(x0, top + h)] + torn(x0, -1)[::-1][1:])
+    poly = " ".join(f"{a:.1f},{b:.1f}" for a, b in shape)
+    cid, fid = f"tp{next(UID)}", f"ts{next(UID)}"
+    fill = c["AMZ"] if kind == "amz" else c["CHEM"]
+    inner = f'<polygon points="{poly}" fill="{fill}"/>'
     if kind == "chem":  # under-construction stripes along both edges
         pid = f"hz{next(UID)}"
-        band += (f'<defs><pattern id="{pid}" width="18" height="18" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">'
-                 f'<rect width="9" height="18" fill="{ink}"/></pattern></defs>'
-                 f'<rect x="-64" y="{top}" width="{W+128}" height="10" fill="url(#{pid})"/>'
-                 f'<rect x="-64" y="{top+48}" width="{W+128}" height="10" fill="url(#{pid})"/>')
-    cx, cy = W / 2, top + 29
-    return (f'<g transform="rotate({angle} {cx} {cy})" opacity="{.55 if kind == "chem" else 1}">{band}'
-            f'<g transform="translate(-64 0)"><g>{run}<animateTransform attributeName="transform" type="translate" '
-            f'from="{frm}" to="{to}" dur="13.33s" repeatCount="indefinite"/></g></g></g>')
+        inner += (f'<defs><pattern id="{pid}" width="18" height="18" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">'
+                  f'<rect width="9" height="18" fill="{ink}"/></pattern></defs>'
+                  f'<rect x="{x0-10}" y="{top}" width="{length+20}" height="10" fill="url(#{pid})"/>'
+                  f'<rect x="{x0-10}" y="{top+h-10}" width="{length+20}" height="10" fill="url(#{pid})"/>')
+    inner += (f'<g>{run}<animateTransform attributeName="transform" type="translate" '
+              f'from="{frm}" to="{to}" dur="13.33s" repeatCount="indefinite"/></g>')
+    return (f'<defs><clipPath id="{cid}"><polygon points="{poly}"/></clipPath>'
+            f'<filter id="{fid}" x="-5%" y="-40%" width="110%" height="180%"><feDropShadow dx="0" dy="4" stdDeviation="5" flood-color="#000" flood-opacity=".35"/></filter></defs>'
+            f'<g transform="rotate({angle} {cx} {cy})" opacity="{.55 if kind == "chem" else 1}">'
+            f'<polygon points="{poly}" fill="{fill}" filter="url(#{fid})"/><g clip-path="url(#{cid})">{inner}</g></g>')
 
 
 def sticker(c, cx, cy):
@@ -470,18 +481,19 @@ def sticker(c, cx, cy):
 
 
 def header(theme, c):
-    H = 495
+    H = 462
     tb = baseline(0, 12, 18)
     top = "".join(f'<text x="{x}" y="{tb:.1f}" font-size="12" font-weight="600" letter-spacing=".96" text-anchor="{a}" fill="{c["MUTED"]}">{t}</text>'
-                  for x, a, t in ((0, "start", "DEVANSH MEHTA"), (318, "start", "BACKEND &amp; DATA SYSTEMS"), (W, "end", "BITS PILANI GOA ’27")))
+                  for x, a, t in ((0, "start", "SOFTWARE ENGINEER"), (318, "start", "BACKEND &amp; DATA SYSTEMS"), (W, "end", "BITS PILANI GOA ’27")))
     big = "".join(f'<text x="-2" y="{baseline(36 + i * BIG_LH, BIG, BIG_LH):.1f}" font-size="{BIG}" font-weight="900" font-stretch="62%" '
                   f'style="font-stretch:62%" letter-spacing="-3.52" fill="{c["TXT"]}">{t}</text>' for i, t in enumerate(("DEVANSH", "MEHTA")))
-    tapes = tape("chem", c, 374, 2.2, 26) + tape("amz", c, 308, -6, 30)
+    # two strips of tape crossing in an X over the bottom of MEHTA; ChemVecto (earlier) underneath Amazon (now)
+    tapes = tape("chem", c, 420, 352, 6, 26) + tape("amz", c, 420, 340, -7, 30)
     label = "THINGS I BUILD ON THE SIDE"
     lw = text_width(label, 12, MONO, wght=600, spacing=2.16)
-    seg = (f'<line x1="0" y1="482" x2="{W/2 - lw/2 - 14:.1f}" y2="482" stroke="{c["LINE"]}"/>'
-           f'<line x1="{W/2 + lw/2 + 14:.1f}" y1="482" x2="{W}" y2="482" stroke="{c["LINE"]}"/>'
-           f'<text class="mono" x="{W/2 + 1.08:.1f}" y="486.5" font-size="12" font-weight="600" letter-spacing="2.16" text-anchor="middle" fill="{c["MUTED"]}">{label}</text>')
+    seg = (f'<line x1="0" y1="448" x2="{W/2 - lw/2 - 14:.1f}" y2="448" stroke="{c["LINE"]}"/>'
+           f'<line x1="{W/2 + lw/2 + 14:.1f}" y1="448" x2="{W}" y2="448" stroke="{c["LINE"]}"/>'
+           f'<text class="mono" x="{W/2 + 1.08:.1f}" y="452.5" font-size="12" font-weight="600" letter-spacing="2.16" text-anchor="middle" fill="{c["MUTED"]}">{label}</text>')
     svg("header", theme, W, H, top + big + tapes + sticker(c, 716, 250) + seg)
 
 
